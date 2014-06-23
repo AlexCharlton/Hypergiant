@@ -1,0 +1,11 @@
+;; hypergiant.setup -*- scheme -*-
+
+(define compile-options "-d2 -O2")
+
+(compile ,compile-options -J -s hypergiant.scm)
+(compile ,compile-options -s hypergiant.import.scm)
+
+(install-extension
+ 'hypergiant
+ '("hypergiant.so" "hypergiant.import.so")
+ '((version "0.1.0")))

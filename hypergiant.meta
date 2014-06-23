@@ -1,0 +1,8 @@
+;; hypergiant.meta -*- scheme -*-
+
+((synopsis "Game library")
+ (author "Alex Charlton")
+ (category graphics)
+ (license "BSD")
+ (depends glfw3 glls opengl-glew gl-math hyperscene random-mtzig miscmacros)
+ (test-depends test))
