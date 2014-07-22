@@ -7,7 +7,7 @@
 
 (import chicken scheme foreign)
 (use glfw3 (prefix glls-render glls:) (prefix opengl-glew gl:) gl-math gl-utils
-     (prefix hyperscene scene:) lolevel srfi-1 srfi-18 random-mtzig miscmacros)
+     (prefix hyperscene scene:) lolevel srfi-1 srfi-18 srfi-69 random-mtzig miscmacros)
 (import-for-syntax (prefix glls-render glls:) (prefix hyperscene scene:))
 
 ;; Initialize first so that pipelines can be defined
@@ -241,6 +241,8 @@
 (define (add-node pipeline parent . args)
   (let ((data (allocate (glls:renderable-size (first pipeline)))))
     (apply (third pipeline) data: data args)
+    (when (and (feature? csi:) (> (length pipeline) 3))
+      (hash-table-set! renderable-table data (fourth pipeline)))
     (scene:add-node parent
                     data 
                     (second pipeline)

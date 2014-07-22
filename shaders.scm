@@ -1,20 +1,50 @@
+(export export-pipeline
+        dynamic-pipeline
+        dynamic-alpha-pipeline)
+
+(define renderable-table (make-hash-table))
+
+(define-external (dynamicRender (c-pointer renderable)) void
+  ((hash-table-ref renderable-table renderable) renderable))
+
+(define-external (dynamicPreRender (c-pointer renderable)) void
+  #f)
+
+(define-external (dynamicPostRender) void
+  #f)
+
+(define dynamic-pipeline (scene:add-pipeline #$dynamicPreRender
+                                             #$dynamicRender
+                                             #$dynamicPostRender
+                                             #f))
+
+(define dynamic-alpha-pipeline (scene:add-pipeline #$dynamicPreRender
+                                                   #$dynamicRender
+                                                   #$dynamicPostRender
+                                                   #t))
+
 (define-syntax define-pipeline
   (ir-macro-transformer
    (lambda (exp i c)
      (let* ((name (strip-syntax (cadr exp)))
             (pipeline-name (symbol-append name '-render-pipeline))
             (fast-draw-funs (symbol-append name '-fast-render-functions))
+            (draw-fun (symbol-append 'render- name))
             (renderable-maker (symbol-append 'make- name '-renderable)))
-       ;; TODO durring interpretation:
-       ;; Add a pipeline that accesses a hash of renderable -> render-func
        `(begin
           (glls:define-pipeline ,@(cdr exp))
-          (define ,pipeline-name
-            (let-values (((_ __ __ begin render end) (,fast-draw-funs)))
-              (list ,name
-                    (set-finalizer! (scene:add-pipeline begin render end #f)
-                                    scene:delete-pipeline)
-                    ,renderable-maker))))))))
+          ,(if (feature? compiling:)
+               `(define ,pipeline-name
+                  (let-values (((_ __ ___ begin render end) (,fast-draw-funs)))
+                    (list ,name
+                          (set-finalizer! (scene:add-pipeline begin render end #f)
+                                          scene:delete-pipeline)
+                          ,renderable-maker)))
+               `(define ,pipeline-name
+                  (list ,name
+                        dynamic-pipeline
+                        ,renderable-maker
+                        ,draw-fun))))))))
 
 (define-syntax export-pipeline
   (ir-macro-transformer
@@ -51,4 +81,3 @@
    (define (main) #:void
      (set! frag-color (vec4 c 1.0)))
    -> ((frag-color #:vec4))))
-
