@@ -244,7 +244,6 @@
     (scene:add-node parent
                     data 
                     (second pipeline)
-                    (foreign-value "&free" c-pointer))
-    data))
+                    (foreign-value "&free" c-pointer))))
 
 ) ; end module hypergiant
