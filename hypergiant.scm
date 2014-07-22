@@ -218,6 +218,7 @@
              (delta (- time *last-render-time*)))
         (render)
         (update delta)
+        (scene:update-scenes)
         (when (feature? csi:)
           (thread-yield!))
         (poll-events)
