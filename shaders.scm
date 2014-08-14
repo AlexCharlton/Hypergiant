@@ -18,6 +18,7 @@
                                              #$dynamicPostRender
                                              #f))
 
+;; TODO: make useful:
 (define dynamic-alpha-pipeline (scene:add-pipeline #$dynamicPreRender
                                                    #$dynamicRender
                                                    #$dynamicPostRender
@@ -60,24 +61,39 @@
 
 (export-pipeline mesh-shader)
 (export-pipeline color-shader)
+(export-pipeline sprite-shader)
 
 (define-pipeline mesh-shader
-  ((#:vertex) ((vertex #:vec3) #:uniform (mvp #:mat4))
+  ((#:vertex input: ((vertex #:vec3))
+             uniform: ((mvp #:mat4)))
    (define (main) #:void
-     (set! gl:position (* mvp (vec4 vertex 1.0))))
-   -> ())
-  ((#:fragment) (#:uniform (color #:vec3))
+     (set! gl:position (* mvp (vec4 vertex 1.0)))))
+  ((#:fragment uniform: ((color #:vec3))
+               output: ((frag-color #:vec4)))
    (define (main) #:void
-     (set! frag-color (vec4 color 1.0)))
-   -> ((frag-color #:vec4))))
+     (set! frag-color (vec4 color 1.0)))))
 
 (define-pipeline color-shader
-  ((#:vertex) ((vertex #:vec3) (color #:vec3) #:uniform (mvp #:mat4))
+  ((#:vertex input: ((vertex #:vec3) (color #:vec3))
+             uniform: ((mvp #:mat4))
+             output: ((c #:vec3)))
    (define (main) #:void
      (set! gl:position (* mvp (vec4 vertex 1.0)))
-     (set! c color))
-   -> ((c #:vec3)))
-  ((#:fragment) ((c #:vec3))
+     (set! c color)))
+  ((#:fragment input: ((c #:vec3))
+               output: ((frag-color #:vec4)))
    (define (main) #:void
-     (set! frag-color (vec4 c 1.0)))
-   -> ((frag-color #:vec4))))
+     (set! frag-color (vec4 c 1.0)))))
+
+(define-pipeline sprite-shader
+  ((#:vertex input: ((vertex #:vec2) (tex-coord #:vec2))
+             uniform: ((mvp #:mat4))
+             output: ((tex-c #:vec2)))
+   (define (main) #:void
+     (set! gl:position (* mvp (vec4 vertex 0.0 1.0)))
+     (set! tex-c tex-coord)))
+  ((#:fragment input: ((tex-c #:vec2))
+               uniform: ((tex #:sampler-2d))
+               output: ((frag-color #:vec4)))
+   (define (main) #:void
+     (set! frag-color (texture tex tex-c)))))
