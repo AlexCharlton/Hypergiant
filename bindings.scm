@@ -179,17 +179,3 @@
 
 (define (set-cursor-position x y)
   (%set-cursor-position (%window) x y))
-
-(define (get-cursor-world-position)
-  (define (scale x) (sub1 (* x 2)))
-  (let-values (((w h) (get-window-size))
-               ((x y) (get-cursor-position)))
-    (let* ((ivp (make-f32vector 16))
-           (x (scale (/ x w)))
-           (y (scale (- 1 (/ y h))))
-           (near (make-point x y -1))
-           (far (make-point x y 1)))
-      (inverse (current-camera-view-projection) (gl:->pointer ivp))
-      (m*vector! ivp near)
-      (m*vector! ivp far)
-      (values near far))))
