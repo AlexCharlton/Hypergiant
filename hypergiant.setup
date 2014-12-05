@@ -1,6 +1,6 @@
 ;; hypergiant.setup -*- scheme -*-
 
-(define compile-options "-d2 -O2")
+(define compile-options "-d2 -O3")
 
 (compile ,compile-options -J -s hypergiant.scm)
 (compile ,compile-options -s hypergiant.import.scm)

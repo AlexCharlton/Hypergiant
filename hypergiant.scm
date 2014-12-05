@@ -2,18 +2,17 @@
   (start
    stop
    add-node
-   define-pipeline
-   export-pipeline)
+   get-window-size)
 
 (import chicken scheme foreign)
-(use glfw3 (prefix glls-render glls:) (prefix opengl-glew gl:) gl-math gl-utils
-     (prefix hyperscene scene:) lolevel srfi-1 srfi-18 srfi-69 random-mtzig miscmacros)
+(use (prefix glfw3 %) (prefix glfw3-bindings %%) (prefix glls-render glls:)
+     (prefix opengl-glew gl:) gl-math
+     gl-utils (prefix hyperscene scene:) lolevel gl-type
+     srfi-1 srfi-18 srfi-42 srfi-69 srfi-99 data-structures
+     random-mtzig miscmacros noise soil)
 (import-for-syntax (prefix glls-render glls:) (prefix hyperscene scene:))
 
-;; Initialize first so that pipelines can be defined
-(scene:init (lambda () (get-window-size (window))))
-
-(include "keybindings.scm")
+(include "bindings.scm")
 (include "math.scm")
 (include "geometry.scm")
 (include "shaders.scm")
@@ -28,8 +27,17 @@
           (except glls
                   define-pipeline)
           gl-math
-          gl-utils
+          (prefix gl-utils-core gl:)
+          gl-utils-ply
+          gl-utils-srfi-4
+          gl-utils-bytevector
+          gl-utils-mesh
+          gl-type
+          noise
+          soil ; TODO: wrap?
           (only glfw3
+                get-time
+                +press+ +release+ +repeat+
                 +joystick-last+
                 +joystick-16+
                 +joystick-15+
@@ -189,45 +197,58 @@
 (define *last-render-time* 0)
 
 (define (render)
-    (swap-buffers (window))
+    (%swap-buffers (%window))
     (gl:clear (bitwise-ior gl:+color-buffer-bit+ gl:+depth-buffer-bit+))
-    (scene:render-cameras))
+    (if (feature? #:csi)
+        (scene:render-cameras)
+        (scene:unsafe-render-cameras)))
 
 (define (resize _ w h)
   (gl:viewport 0 0 w h)
-  (scene:resize-cameras w h))
+  (scene:resize-cameras))
 
 (define (start* width height title . args)
-  (init)
-  (window-size-callback resize)
-  (key-callback key-event)
-  (apply make-window width height title args)
+  (%init)
+  (scene:init (lambda () (%get-window-size (%window))))
+  (%window-size-callback resize)
+  (%mouse-button-callback mouse-click)
+  (apply %make-window width height title samples: 2 args)
+  (%%set-cursor-pos-callback (%window) #$hpgCursorPositionCallback)
+  (%%set-scroll-callback (%window) #$hpgScrollCallback)
+  (%%set-key-callback (%window) #$hpgKeyCallback)
+  (%%set-char-callback (%window) #$hpgCharCallback)
   (gl:init)
 
   (gl:enable gl:+depth-test+)
-  (gl:enable gl:+blend+)
+  ;(gl:enable gl:+blend+)
+  (cond-expand
+    ((not gles) (gl:enable gl:+multisample+))
+    (else))
   ;(gl:enable gl:+cull-face+)
   (gl:blend-func gl:+src-alpha+ gl:+one-minus-src-alpha+)
 
   (resize #f width height)
   ((get-keyword init: args (lambda () (lambda () #f))))
   (gc)
+  (set! *last-render-time* (%get-time))
   (let ((update (get-keyword update: args (lambda () (lambda (delta) #f)))))
     (let loop ()
-      (let* ((time (get-time))
+      (let* ((time (%get-time))
              (delta (- time *last-render-time*)))
-        (render)
         (update delta)
         (scene:update-scenes)
+        (render)
+        (gl:check-error)
+        (set! *last-render-time* time)
         (when (feature? csi:)
           (thread-yield!))
-        (poll-events)
-        (set! *last-render-time* time))
-      (unless (window-should-close (window))
+        (%poll-events))
+      (unless (%window-should-close? (%window))
         (loop))))
-  ((get-keyword clean-up: args (lambda () (lambda () #f))))
-  (destroy-window (window))
-  (terminate))
+  ((get-keyword cleanup: args (lambda () (lambda () #f))))
+  (gc)
+  (%destroy-window (%window))
+  (%terminate))
 
 (define (start width height title . args)
   (define start** (lambda () (apply start* width height title args)))
@@ -236,11 +257,20 @@
       (start**)))
 
 (define (stop)
-  (set-window-should-close (window) #t))
+  (%set-window-should-close (%window) #t))
+
+(define (get-window-size)
+  (%get-window-size (%window)))
 
 (define (add-node pipeline parent . args)
   (let ((data (allocate (glls:renderable-size (first pipeline)))))
-    (apply (third pipeline) data: data args)
+    (if* (get-keyword mesh: args)
+         (unless (mesh-vao it)
+           (mesh-make-vao! it (glls:pipeline-mesh-attributes (first pipeline))
+                           (get-keyword usage: args (lambda () #:static)))))
+    (apply (third pipeline) data: data
+           (append args (list mvp: (current-camera-model-view-projection))))
+    ;; TODO append other current-camera-*s
     (when (and (feature? csi:) (> (length pipeline) 3))
       (hash-table-set! renderable-table data (fourth pipeline)))
     (scene:add-node parent
