@@ -2,10 +2,13 @@
 
 (define compile-options "-d2 -O3")
 
+(compile ,compile-options -J -s hypergiant-render-pipeline.scm)
+(compile ,compile-options -s hypergiant-render-pipeline.import.scm)
 (compile ,compile-options -J -s hypergiant.scm)
 (compile ,compile-options -s hypergiant.import.scm)
 
 (install-extension
  'hypergiant
- '("hypergiant.so" "hypergiant.import.so")
+ '("hypergiant.so" "hypergiant.import.so"
+   "hypergiant-render-pipeline.so" "hypergiant-render-pipeline.import.so")
  '((version "0.1.0")))

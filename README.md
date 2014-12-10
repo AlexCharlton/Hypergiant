@@ -1,5 +1,5 @@
-# hypergiant
-hypergiant is a library for games and other interactive media applications. Its philosophy is that it should be easy to (efficiently) perform common operations, but it shouldn’t be hard to do otherwise. hypergiant is therefore not a framework, and doesn’t force you into any one mode of operation. Rather it’s based on acting as a glue between other graphics libraries.
+# Hypergiant
+Hypergiant is a library for games and other interactive media applications. Its philosophy is that it should be easy to (efficiently) perform common operations, but it shouldn’t be hard to do otherwise. Hypergiant is therefore not a framework, and doesn’t force you into any one mode of operation. Rather it’s based on acting as a glue between other graphics libraries.
 
 ## Installation
 This repository is a [Chicken Scheme](http://call-cc.org/) egg.
@@ -13,7 +13,7 @@ It is part of the [Chicken egg index](http://wiki.call-cc.org/chicken-projects/e
 * gl-math
 * gl-type
 * glls
-* hyperscene
+* Hyperscene
 * noise
 * soil
 * random-mtzig
@@ -21,9 +21,9 @@ It is part of the [Chicken egg index](http://wiki.call-cc.org/chicken-projects/e
 * srfi-42
 
 ## Documentation
-Reexports: opengl-glew (prefix `gl:`), gl-utils (gl-utils-core is prefiex with `gl:`, all other modules have no prefix), gl-math, gl-type, noise, and soil. glls and hyperscene are rexported with several enhanced functions, as noted below.
+Reexports: opengl-glew (prefix `gl:`), gl-utils (gl-utils-core is prefiex with `gl:`, all other modules have no prefix), gl-math, gl-type, noise, and soil. glls and most of Hyperscene are rexported with several enhanced functions, as noted below.
 
-Take care with using any of the functions from these libraries that aren’t exported by hypergiant (including glfw3). This probably means that you need to know how those functions will interact with hypergiant before you doing anything. Or it might mean that I forgot to export something ;)
+Take care with using any of the functions from these libraries that aren’t exported by Hypergiant (including glfw3). This probably means that you need to know how those functions will interact with Hypergiant before you doing anything. Or it might mean that I forgot to export something ;)
 
 ### Main loop
     [procedure] (start WIDTH HEIGHT TITLE [init: INIT] [update: UPDATE] [cleanup: CLEANUP] . WINDOW-HINTS)
@@ -87,11 +87,11 @@ Non-destructively modify the list `BINDINGS`, removing the binding with the give
 Non-destructively modify the list `BINDINGS`, replacing the binding with the given `ID` with the new binding. `BINDING` should be a list that is `apply`able to `make-binding`.
 
 #### Key bindings
-    [procedure] (push-key-bindings! BINDINGS)
+    [procedure] (push-key-bindings BINDINGS)
 
 Set the currently active action that will occur when a key is pressed, pushing that action onto a stack. `BINDINGS` may be a list of bindings, in which case those bindings will be obeyed. `BINDINGS` may also be a function of four arguments – `(key scancode action mods)` – in which case this function is called when a key press occurs. `key` is a key code, whereas `scancode` is the corresponding scancode for the key that was pressed. `action` is one of `+press+`, `+release+`, or `+repeat+`, and `mods` is the integer formed by anding together the modifier keys – `+mod-super+`, `+mod-alt+`, `+mod-control+`, and `+mod-shift+` – that were pressed at the time of the key event.
 
-    [procedure] (pop-key-bindings!)
+    [procedure] (pop-key-bindings)
 
 Return the state of the key bindings to before the last `push-key-bindings!`.
 
@@ -100,11 +100,11 @@ Return the state of the key bindings to before the last `push-key-bindings!`.
 This parameter may be set to be a one argument function that is called whenever a unicode character is generated. The function will be called with an integer representing the character. Use this rather than relying on key codes when text input is desired. Note that it is often desirable to have some form of key bindings present even when the char-callback function is set (e.g. pressing escape may exit a text field), but if no other key bindings are desired, an empty list may be passed to `push-key-bindings!`.
 
 #### Mouse bindings
-    [procedure] (push-mouse-bindings! BINDINGS)
+    [procedure] (push-mouse-bindings BINDINGS)
 
 Set the currently active action that will occur when a mouse button is pressed, pushing that action onto a stack. `BINDINGS` must be a list of bindings.
 
-    [procedure] (pop-mouse-bindings!)
+    [procedure] (pop-mouse-bindings)
 
 Return the state of the mouse bindings to before the last `push-mouse-bindings!`.
 
@@ -130,12 +130,31 @@ A parameter that must be set to a two argument function, which is called when th
 A parameter that must be set to a two argument function, which is called when the mouse wheel or track-pad is scrolled. The two arguments for the function represent the x and y distance (in pixels) that has been scrolled, respectively.
 
 ### Scenes
-    [procedure] (add-node PIPELINE PARENT [mesh: MESH] [usage: USAGE]. ARGS)
+Hypergiant reexports most of Hyperscene except for `init`, `add-pipeline` `delete-pipeline`, and `resize-cameras`, as it manages this functionality. `init` and `resize-cameras` are handled by `start` while `add/delete-pipeline` are handled by Hypergiant’s `define-pipline`. `add-node` is modified as described below.
 
-### Shaders
-(define-pipeline)
-(define-alpha-pipeline)
-(export-pipeline)
+    [procedure] (add-node PARENT RENDER-PIPELINE [mesh: MESH] [vao: VAO] [mode: MODE] [n-elements: N-ELEMENTS] [element-type: ELEMENT-TYPE] [offset: OFFSET] [usage: USAGE] [draw-arrays?: DRAW-ARRAYS?])
+
+This extension of the Hyperscene function of the same name (along with Hypergiant’s extension of `define-pipline`) is where the majority of the magic of Hypergiant happens. Unlike its cousin, Hypergiant’s `add-node`’s `RENDER-PIPELINE` argument accepts the special `*-render-pipeline` object defined by Hypergiant’s `define-pipeline` rather than a Hyperscene pipeline.  Because of this, Hyperscene pipelines never need to be manually created.
+
+The node data that is created is therefore a glls [renderable](http://wiki.call-cc.org/eggref/4/glls#renderables) object. `MESH`, `VAO`, `MODE`, `N-ELEMENTS`, `ELEMENT-TYPE`, and `OFFSET` all function as they do when making a renderable. Additionally, `MESH` may be passed to `add-node` when its VAO has not yet been created (i.e. with [`mesh-make-vao`](http://api.call-cc.org/doc/gl-utils/mesh-make-vao%21)), and `mesh-make-vao!` will be called automatically, influenced by the optional `USAGE` keyword (defaulting to `+static`). `DRAW-ARRAYS?` is a boolean that indicates whether or not the renderable’s array rendering function should be used (i.e. `draw-arrays` is used instead of `draw-elements`). `DRAW-ARRAYS?` defaults to `#t` if `MESH` has no index data, and `f` otherwise.
+
+`add-node`, along with `define-pipeline` also does some magic so that things keep working when the program is evaluated (as opposed to compiled), but that’s all we’re going to say about that.
+
+It’s worth noting that when `add-node` is called with a mesh, no references to that node are kept. Make sure you keep your meshes live, lest they become garbage.
+
+### Render-pipelines
+    [macro] (define-pipeline PIPELINE-NAME . SHADERS)
+    [macro] (define-alpha-pipeline PIPELINE-NAME . SHADERS)
+
+Accepts arguments identical to glls’ [`define-pipeline`](http://api.call-cc.org/doc/glls/define-pipeline), but additionally defines a render-pipeline object with the name `PIPELINE-NAME-render-pipeline`. This render-pipeline object should be passed to `add-node`, and contains all the functions necessary to render the pipeline’s renderables. In other words, this creates managed Hyperscene pipeline objects that you don’t need to worry about. Additional stuff is going if you evaluate (i.e. don’t compile) the program.
+
+`define-alpha-pipeline` works the same, but the creates a pipeline that is potentially transparent to some degree. This additional macro is necessary since Hyperscene renders alpha objects at a different stage, in a different order from opaque objects. 
+
+    [macro] (export-pipeline . PIPELINES)
+
+Since `define-pipeline` defines multiple objects, this macro exports everything related to each pipeline in `PIPELINES`.
+
+### Pre-defined pipelines and shaders
 
 ### Geometry
 

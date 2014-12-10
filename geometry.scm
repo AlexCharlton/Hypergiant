@@ -1,6 +1,10 @@
 (export cylinder-mesh
         rectangle-mesh)
 
+;; (define (circle-mesh resolutions))
+;; (define (cube-mesh ))
+;; (define (line-mesh points))
+
 (define (cylinder-mesh vertical-subdivisions resolution)
   (let* ((angle-increment (/ (* 2 pi) resolution))
          (height-increment (/ vertical-subdivisions))
