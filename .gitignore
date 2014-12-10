@@ -3,3 +3,4 @@
 *.so
 *.o
 README.svnwiki
+/examples/go
