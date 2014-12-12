@@ -25,12 +25,12 @@
   (%%set-char-callback (%window) #$hpgCharCallback)
   (gl:init)
   (gl:enable gl:+depth-test+)
-  ;(gl:enable gl:+blend+)
+  (gl:enable gl:+blend+)
+  (gl:blend-func gl:+src-alpha+ gl:+one-minus-src-alpha+)
+  (gl:enable gl:+cull-face+)
   (cond-expand
     ((not gles) (gl:enable gl:+multisample+))
     (else))
-  ;(gl:enable gl:+cull-face+)
-  (gl:blend-func gl:+src-alpha+ gl:+one-minus-src-alpha+)
 
   (resize #f width height)
   (glls:compile-pipelines)
