@@ -9,7 +9,7 @@
 
 (import chicken scheme foreign)
 (use (prefix hyperscene scene:) (prefix glls-render glls:) gl-utils
-     srfi-69 lolevel srfi-1 srfi-99)
+     miscmacros srfi-69 lolevel srfi-1 srfi-99)
 (import-for-syntax (prefix glls-render glls:) (prefix hyperscene scene:) srfi-99)
 
 (define-record-type render-pipeline
@@ -129,9 +129,14 @@
                             (loop (cdr pipelines)))))))))))
 
 (define (add-node parent pipeline . args)
-  (if (render-pipeline? pipeline)
-      (apply add-node* parent pipeline args)
-      (apply scene:add-node parent pipeline args)))
+  (let ((node (if (render-pipeline? pipeline)
+                 (apply add-node* parent pipeline args)
+                 (apply scene:add-node parent pipeline args))))
+    (if* (get-keyword position: args)
+         (scene:set-node-position! node it))
+    (if* (get-keyword radius: args)
+         (scene:set-node-bounding-sphere! node it))
+    node))
 
 (define (add-node* parent pipeline . args)
   (define current-vars (list mvp: (scene:current-camera-model-view-projection)
