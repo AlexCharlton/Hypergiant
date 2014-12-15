@@ -4,6 +4,8 @@
  (define old-glsl-version (glsl-version))
  (glsl-version 120))
 
+(export phong-lighting
+        set-max-lights!)
 (export-pipeline
  mesh-pipeline
  color-pipeline
@@ -69,6 +71,7 @@
      (let ((r #:float (field (texture-2d tex tex-c) r)))
        (set! gl:frag-color (vec4 color r))))))
 
+;; TODO light direction
 (define-syntax phong-light-n
   (er-macro-transformer
    (lambda (expr r c)
@@ -95,22 +98,23 @@
                        (specular-exponent #:float material.a)
                        (distance #:vec3 (- light-position position))
                        (intensity #:float (clamp (/ light-intensity
-                                                    (+ 0.001
-                                                       (* distance.x distance.x)
-                                                       (* distance.y distance.y)
-                                                       (* distance.z distance.z)))
-                                                 0 1))
+                                                    (pow (+ 0.001
+                                                            (* distance.x distance.x)
+                                                            (* distance.y distance.y)
+                                                            (* distance.z distance.z))
+                                                         2))
+                                                 0.0 1.0))
                        (to-light #:vec3 (normalize distance))
                        (to-camera #:vec3 (normalize (- camera-position position)))
-                       (diffuse-intensity #:float (max (dot normal to-light) 0))
+                       (diffuse-intensity #:float (max (dot normal to-light) 0.0))
                        (diffuse #:vec3 (* surface-color.rgb light-color
                                           diffuse-intensity))
                        (specular-intensity
-                        #:float (if (> diffuse-intensity 0)
+                        #:float (if (> diffuse-intensity 0.0)
                                     (max (dot to-camera
                                               (reflect (- to-light) normal))
-                                         0)
-                                    0))
+                                         0.0)
+                                    0.0))
                        (specular #:vec3 (* light-color surface-specular
                                            (expt specular-intensity
                                                  specular-exponent))))
