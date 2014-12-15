@@ -20,7 +20,8 @@
                   add-pipeline
                   delete-pipeline
                   resize-cameras
-                  add-node)
+                  add-node
+                  set-max-lights!)
           (except glls
                   define-pipeline)
           hypergiant-render-pipeline
