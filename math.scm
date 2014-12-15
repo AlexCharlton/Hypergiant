@@ -11,7 +11,7 @@
 
 (define random-state (random-mtzig:init))
 
-(define (random-normal #!optional mean variance)
+(define (random-normal #!optional (mean 0 ) (variance 1))
   (+ mean
      (* (random-mtzig:randn! random-state)
         variance)))
@@ -23,6 +23,7 @@
 (define (clamp x l u)
   (min (max x l) u))
 
+;; TODO vector operations could match gl-math better: optional return arguments that dictate where the result is created
 (define (vclamp v l u)
   (make-point (clamp (point-x v) l u)
               (clamp (point-y v) l u)
@@ -34,7 +35,8 @@
   (point-z-set! (clamp (point-z v) l u)))
 
 (define (v/ v s)
-  (v* v (/ s)))
+  (let ((r (/ s)))
+    (v* v r)))
 
 (define (vround v)
   (make-point (round (point-x v))
