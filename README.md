@@ -21,7 +21,7 @@ It is part of the [Chicken egg index](http://wiki.call-cc.org/chicken-projects/e
 * srfi-42
 
 ## Documentation
-Reexports: opengl-glew (prefix `gl:`), gl-utils (gl-utils-core is prefiex with `gl:`, all other modules have no prefix), gl-math, gl-type, noise, and soil. glls and most of Hyperscene are rexported with several enhanced functions, as noted below.
+Reexports: [opengl-glew](http://wiki.call-cc.org/eggref/4/opengl-glew) (prefix `gl:`), [gl-utils](http://wiki.call-cc.org/eggref/4/gl-utils) (gl-utils-core is prefiex with `gl:`, all other modules have no prefix), [gl-math](http://wiki.call-cc.org/eggref/4/gl-math), [gl-type](http://wiki.call-cc.org/eggref/4/gl-type), [noise](http://wiki.call-cc.org/eggref/4/noise), and [soil](http://wiki.call-cc.org/eggref/4/soil). [glls](http://wiki.call-cc.org/eggref/4/glls) and most of [Hyperscene](http://wiki.call-cc.org/eggref/4/hyperscene) are rexported with several enhanced functions, as noted below.
 
 Take care with using any of the functions from these libraries that aren’t exported by Hypergiant (including glfw3). This probably means that you need to know how those functions will interact with Hypergiant before you doing anything. Or it might mean that I forgot to export something ;)
 
@@ -130,13 +130,15 @@ A parameter that must be set to a two argument function, which is called when th
 A parameter that must be set to a two argument function, which is called when the mouse wheel or track-pad is scrolled. The two arguments for the function represent the x and y distance (in pixels) that has been scrolled, respectively.
 
 ### Scenes
-Hypergiant reexports most of Hyperscene except for `init`, `add-pipeline` `delete-pipeline`, and `resize-cameras`, as it manages this functionality. `init` and `resize-cameras` are handled by `start` while `add/delete-pipeline` are handled by Hypergiant’s `define-pipline`. `add-node` is modified as described below.
+Hypergiant reexports most of [Hyperscene](http://wiki.call-cc.org/eggref/4/hyperscene) except for `init`, `add-pipeline` `delete-pipeline`, and `resize-cameras`, as it manages this functionality. `init` and `resize-cameras` are handled by `start` while `add/delete-pipeline` are handled by Hypergiant’s `define-pipline`. `add-node` is modified as described below.
 
-    [procedure] (add-node PARENT RENDER-PIPELINE [mesh: MESH] [vao: VAO] [mode: MODE] [n-elements: N-ELEMENTS] [element-type: ELEMENT-TYPE] [offset: OFFSET] [usage: USAGE] [draw-arrays?: DRAW-ARRAYS?])
+    [procedure] (add-node PARENT PIPELINE [mesh: MESH] [vao: VAO] [mode: MODE] [n-elements: N-ELEMENTS] [element-type: ELEMENT-TYPE] [offset: OFFSET] [usage: USAGE] [draw-arrays?: DRAW-ARRAYS?] [position: POSITION] [radius: RADIUS] . ARGS)
 
-This extension of the Hyperscene function of the same name (along with Hypergiant’s extension of `define-pipline`) is where the majority of the magic of Hypergiant happens. Unlike its cousin, Hypergiant’s `add-node`’s `RENDER-PIPELINE` argument accepts the special `*-render-pipeline` object defined by Hypergiant’s `define-pipeline` rather than a Hyperscene pipeline.  Because of this, Hyperscene pipelines never need to be manually created.
+This extension of the Hyperscene function of the same name (along with Hypergiant’s extension of `define-pipline`) is where the majority of the magic of Hypergiant happens. Unlike its cousin, Hypergiant’s `add-node`’s `PIPELINE` argument accepts the special `*-render-pipeline` object defined by Hypergiant’s `define-pipeline` rather than a Hyperscene pipeline.  Because of this, Hyperscene pipelines never need to be manually created. When a non-render-pipeline (i.e. a Hyperscene pipeline) is passed to `add-node`, it acts identically to the Hyperscene version, except for the addition of `POSITION` and `RADIUS`.
 
-The node data that is created is therefore a glls [renderable](http://wiki.call-cc.org/eggref/4/glls#renderables) object. `MESH`, `VAO`, `MODE`, `N-ELEMENTS`, `ELEMENT-TYPE`, and `OFFSET` all function as they do when making a renderable. Additionally, `MESH` may be passed to `add-node` when its VAO has not yet been created (i.e. with [`mesh-make-vao`](http://api.call-cc.org/doc/gl-utils/mesh-make-vao%21)), and `mesh-make-vao!` will be called automatically, influenced by the optional `USAGE` keyword (defaulting to `+static`). `DRAW-ARRAYS?` is a boolean that indicates whether or not the renderable’s array rendering function should be used (i.e. `draw-arrays` is used instead of `draw-elements`). `DRAW-ARRAYS?` defaults to `#t` if `MESH` has no index data, and `f` otherwise.
+`POSITION` expects a gl-math point. When `POSITION` is provided, `set-node-position!` is called with `POSITION` after the node is created. `RADIUS` expects a float. When `RADIUS` is provided, `set-node-bounding-sphere!` is called with `RADIUS` after the node is created.
+
+When `PIPELINE` is a render-pipeline the node data that is created is a glls [renderable](http://wiki.call-cc.org/eggref/4/glls#renderables) object. `MESH`, `VAO`, `MODE`, `N-ELEMENTS`, `ELEMENT-TYPE`, and `OFFSET` all function as they do when making a renderable. Additionally, `MESH` may be passed to `add-node` when its VAO has not yet been created (i.e. with [`mesh-make-vao`](http://api.call-cc.org/doc/gl-utils/mesh-make-vao%21)), and `mesh-make-vao!` will be called automatically, influenced by the optional `USAGE` keyword (defaulting to `+static`). `DRAW-ARRAYS?` is a boolean that indicates whether or not the renderable’s array rendering function should be used (i.e. `draw-arrays` is used instead of `draw-elements`). `DRAW-ARRAYS?` defaults to `#t` if `MESH` has no index data, and `#f` otherwise. `add-node` accepts other keyword `ARGS`, which are used to set the value for each uniform in the pipeline, as required by glls renderable makers.
 
 `add-node`, along with `define-pipeline` also does some magic so that things keep working when the program is evaluated (as opposed to compiled), but that’s all we’re going to say about that.
 
@@ -155,26 +157,56 @@ Accepts arguments identical to glls’ [`define-pipeline`](http://api.call-cc.or
 Since `define-pipeline` defines multiple objects, this macro exports everything related to each pipeline in `PIPELINES`.
 
 ### Pre-defined pipelines and shaders
+mesh-pipeline
+color-pipeline
+texture-pipeline
+sprite-pipeline
+text-pipeline
+phong-lighting
 
 ### Geometry
+Hypergiant provides numerous functions for generating [gl-utils meshes](http://api.call-cc.org/doc/gl-utils#sec:gl-utils-mesh). A surprising amount can be done by transforming and appending these simple primitives.
+
+line-mesh
+rectangle-mesh
+circle-mesh
+cube-mesh
+sphere-mesh
+cylinder-mesh
 
 ### Math
-gl-math
+Hypergiant reexports all of [gl-math](http://wiki.call-cc.org/eggref/4/gl-math) with no modifications. The following math functions are additionally provided
 
-(random-normal [MEAN] [VARIANCE])
-(random-float)
-(clamp X LOWER UPPER)
+    [procedure] (random-normal [MEAN] [VARIANCE])
 
-#### Vectors
-The following operate on the 3 element vectors defined in gl-math.
+Return a semi-random floating point value. The values will be generated to fall in a a normal distribution around `MEAN`, defaulting to 0, with the given `VARIANCE`, defaulting to 1.
 
-(vclamp VECTOR LOWER UPPER)
-(vclamp! VECTOR LOWER UPPER)
-(v/ VECTOR S)
-(vround VECTOR)
-(vfloor VECTOR)
-(vceiling VECTOR)
-(vtruncate VECTOR)
+    [procedure] (random-float)
+
+Return a random floating point value between -1 and 1.
+
+    [procedure] (clamp X LOWER UPPER)
+
+Given the number `X`, return a value that is the same, so long as it is not greater than `UPPER` or less than `LOWER`: in these cases, return the upper or lower bound, respectively.
+
+#### Vector operations
+The following operate on the 3 element vectors (`point`s) defined in gl-math.
+
+    [procedure] (vclamp VECTOR LOWER UPPER)
+    [procedure] (vclamp! VECTOR LOWER UPPER)
+
+Return a point with each element of `VECTOR` clamped to `LOWER` and `UPPER`. `vclamp!` destructively modifies the original vector.
+
+    [procedure] (v/ VECTOR S [RESULT])
+
+Return the result of the dividing each element of `VECTOR` with scalar `S`. If a vector `RESULT` is given, it will be modified to contain the result. If `RESULT` is `#t` the returned value will be an f32vector located in non-garbage-collected memory (the memory will still be freed when there are no more references to the matrix). If `RESULT` is not provided, the returned value will be an f32vector located in normal garbage collected memory.
+
+    [procedure] (vround VECTOR)
+    [procedure] (vfloor VECTOR)
+    [procedure] (vceiling VECTOR)
+    [procedure] (vtruncate VECTOR)
+
+Return a point that has had the operation `round`, `floor`, `ceiling`, or `truncate` performed on each element of `VECTOR`.
 
 ## Examples
 
