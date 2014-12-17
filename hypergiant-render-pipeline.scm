@@ -1,7 +1,7 @@
 (module hypergiant-render-pipeline
   (export-pipeline
-   define-pipeline
-   define-alpha-pipeline
+   (define-pipeline make-render-pipeline dynamic-pipeline)
+   (define-alpha-pipeline make-render-pipeline dynamic-alpha-pipeline)
    dynamic-pipeline
    dynamic-alpha-pipeline
    add-node
@@ -36,11 +36,6 @@
                                                    #$dynamicRender
                                                    #$dynamicPostRender
                                                    #t))
-
-(begin-for-syntax
- (define (make-render-pipeline) #f)
- (define (dynamic-pipeline) #f)
- (define (dynamic-alpha-pipeline) #f))
 
 (define-syntax define-pipeline
   (ir-macro-transformer
