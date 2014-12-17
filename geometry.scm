@@ -125,30 +125,171 @@
                2
                mode)))
 
-; TODO
 (define (cube-mesh length #!key (mode #:triangles) (normals? #f) (winding #:ccw)
-                     (index-type #:ushort) (color-type #:ushort) (texture-type #:ushort))
-  #f)
+                   color texture cube-map?
+                   (index-type #:ushort) (color-type #:ushort) (texture-type #:float))
+  (let* ((front-top-left     '(-1  1  1))
+         (front-top-right    '( 1  1  1))
+         (front-bottom-left  '(-1 -1  1))
+         (front-bottom-right '( 1 -1  1))
+         (back-top-left      '(-1  1 -1))
+         (back-top-right     '( 1  1 -1))
+         (back-bottom-left   '(-1 -1 -1))
+         (back-bottom-right  '( 1 -1 -1))
+         (back               '( 0  0 -1))
+         (front              '( 0  0  1))
+         (left               '(-1  0  0))
+         (right              '( 1  0  0))
+         (up                 '( 0  1  0))
+         (down               '( 0 -1  0))
+         (unit-cube (append front-top-left front-top-right ; front
+                            front-bottom-left front-bottom-right
+                            front-top-right back-top-right ;right
+                            front-bottom-right back-bottom-right
+                            back-top-right back-top-left ; back
+                            back-bottom-right back-bottom-left
+                            back-top-left front-top-left ; left
+                            back-bottom-left front-bottom-left
+                            back-top-left back-top-right ; top
+                            front-top-left front-top-right
+                            front-bottom-left front-bottom-right ;bottom
+                            back-bottom-left back-bottom-right))
+         (indices (append-ec (:range i 6)
+                             (let ((face (* i 4)))
+                               (map (cut + face <>)
+                                    (list 0 2 3 0 3 1)))))
+         (position (cons 'position (map (cut * length <>)
+                                        unit-cube)))
+         (normal (and normals? (cons 'normal (append front front front front
+                                                     right right right right
+                                                     back back back back
+                                                     left left left left
+                                                     up up up up
+                                                     down down down down))))
+         (color (and color (cons 'color
+                                 (flatten (list-tabulate 24 color)))))
+         (texture (cond
+                   (texture (cons 'tex-coord (flatten (list-tabulate 24 texture))))
+                   (cube-map?
+                    (cons 'tex-coord unit-cube))
+                   (else #f))))
+    (mesh-make (list position
+                     normal
+                     color
+                     texture)
+               indices
+               winding
+               index-type
+               color-type
+               texture-type
+               3
+               mode)))
 
 (define (sphere-mesh radius resolution #!key (type #:uv) color (normals? #f)
-                     (index-type #:ushort) (color-type #:ushort)
-                     (texture-type #:ushort) (mode #:triangles) (winding #:ccw)
+                     (index-type #:ushort) (color-type #:ushort) cube-map?
+                     texture-type (mode #:triangles) (winding #:ccw)
                      texture texture-width texture-height (texture-offset (list 0 0)))
   (ecase type
     ((#:uv) (uv-sphere-mesh radius resolution normals? color mode winding
                             texture texture-width texture-height texture-offset
-                            index-type color-type texture-type))
-    ((#:iso) (isosphere-mesh radius resolution normals? color mode winding
-                             ;texture texture-width texture-height texture-offset
-                             index-type color-type texture-type))))
+                            index-type color-type (or texture-type #:ushort)))
+    ((#:cube) (cubesphere-mesh radius resolution normals? color mode winding
+                               texture cube-map?
+                               index-type color-type (or texture-type #:float)))))
 
-;; TODO
-(define (isosphere-mesh radius resolution normals? color mode winding
-                        ;texture texture-width texture-height texture-offset
-                        index-type color-type texture-type)
-  #f)
+(define (cubesphere-mesh radius resolution normals? color mode winding
+                         texture cube-map? index-type color-type texture-type)
+  (when (< resolution 1)
+    (error 'cubesphere-mesh "Resolution must not be less than 1:" resolution))
+  (define resolution+1 (add1 resolution))
+  (define (gen-face top-left bottom-right)
+    (define (gen-range a b)
+      (if (= a b)
+          a
+          (iota resolution+1 a (/ (- b a) resolution))))
+    (let* ((xs (gen-range (first top-left) (first bottom-right)))
+           (ys (gen-range (second top-left) (second bottom-right)))
+           (zs (gen-range (third top-left) (third bottom-right))))
+      (cond
+       ((number? xs)
+        (list-ec (:list y ys)
+                 (:list z zs)
+                 (list xs y z)))
+       ((number? ys)
+        (list-ec (:list z zs)
+                 (:list x xs)
+                 (list x ys z)))
+       ((number? zs)
+        (list-ec (:list y ys)
+                 (:list x xs)
+                 (list x y zs))))))
+  (let* ((front-top-left     '(-1  1  1))
+         (front-top-right    '( 1  1  1))
+         (front-bottom-left  '(-1 -1  1))
+         (front-bottom-right '( 1 -1  1))
+         (back-top-left      '(-1  1 -1))
+         (back-top-right     '( 1  1 -1))
+         (back-bottom-left   '(-1 -1 -1))
+         (back-bottom-right  '( 1 -1 -1))
+         (unit-cube (append! (gen-face front-top-left front-bottom-right) ; front
+                            (gen-face front-top-right back-bottom-right) ; right
+                            (gen-face back-top-right back-bottom-left)   ; back
+                            (gen-face back-top-left front-bottom-left)   ; left
+                            (gen-face back-top-left front-top-right)     ; top
+                            (gen-face front-bottom-left back-bottom-right) ; bottom
+                            ))
+         (unit-sphere (append-ec (:list vert unit-cube)
+                                 (let* ((x (first vert))
+                                        (y (second vert))
+                                        (z (third vert))
+                                        (length (sqrt (+ (* x x) (* y y) (* z z))))
+                                        (/length (/ length)))
+                                   (list (* x /length) (* y /length) (* z /length)))))
+         (n-verts-per-face (* resolution+1 resolution+1))
+         (face-indices (append-ec (:range row resolution)
+                                  (:range column resolution)
+                                  (let* ((row (* row resolution+1))
+                                         (next-row (+ row resolution+1))
+                                         (next-column (add1 column))
+                                         (top-left (+ row column))
+                                         (top-right (+ row next-column))
+                                         (bottom-left (+ next-row column))
+                                         (bottom-right (+ next-row next-column)))
+                                    (list top-left
+                                          bottom-left
+                                          bottom-right
+                                          top-left
+                                          bottom-right
+                                          top-right))))
+         (indices (append-ec (:range i 6)
+                             (let ((face (* i n-verts-per-face)))
+                               (map (cut + face <>)
+                                    face-indices))))
+         (position (cons 'position (map (cut * radius <>)
+                                        unit-sphere)))
+         (normal (and normals? (cons 'normal unit-sphere)))
+         (color (and color (cons 'color
+                                 (flatten (list-tabulate (* 6 n-verts-per-face)
+                                                         color))))) 
+         (texture (cond
+                   (texture (cons 'tex-coord
+                                  (flatten (list-tabulate (* 6 n-verts-per-face)
+                                                          texture))))
+                   (cube-map?
+                    (cons 'tex-coord unit-sphere))
+                   (else #f))))
+    (mesh-make (list position
+                     normal
+                     color
+                     texture)
+               indices
+               winding
+               index-type
+               color-type
+               texture-type
+               3
+               mode)))
 
-(use format)
 (define (uv-sphere-mesh radius resolution normals? color mode winding
                         texture texture-width texture-height texture-offset
                         index-type color-type texture-type)
@@ -156,9 +297,10 @@
     (error 'uv-sphere-mesh "Resolution must be even and not less than 4:" resolution))
   (let* ((angle-increment (* 2 (/ pi resolution)))
          (n-lat-verts (add1 (/ resolution 2)))
+         (resolution+1 (add1 resolution))
          (circle-points (map (lambda (angle)
-                               (cons (cos angle) (- (sin angle))))
-                             (iota (add1 resolution) 0 angle-increment)))
+                               (cons (- (cos angle)) (sin angle)))
+                             (iota resolution+1 0 angle-increment)))
          (semi-circle-points (map (lambda (angle)
                                     (cons (cos angle)
                                           (sin angle)))
@@ -168,12 +310,67 @@
                                  (list (* (car longitude) (cdr latitude))
                                        (car latitude)
                                        (* (cdr longitude) (cdr latitude)))))
-         (vertices (map (cut * radius <>)
-                        unit-sphere))
          (indices (append-ec (:range lat (/ resolution 2))
                              (:range column resolution)
-                             (let* ((row (* lat (add1 resolution)))
-                                    (next-row (+ row (add1 resolution)))
+                             (let* ((row (* lat resolution+1))
+                                    (next-row (+ row resolution+1))
+                                    (next-column (add1 column))
+                                    (top-left (+ row column))
+                                    (top-right (+ row next-column))
+                                    (bottom-left (+ next-row column))
+                                    (bottom-right (+ next-row next-column)))
+                               (list top-left
+                                     bottom-left
+                                     bottom-right
+                                     top-left
+                                     bottom-right
+                                     top-right))))
+         (position (cons 'position (map (cut * radius <>)
+                                        unit-sphere)))
+         (normal (and normals? (cons 'normal unit-sphere)))
+         (color (and color (cons 'color
+                                 (flatten (list-tabulate (* resolution+1
+                                                            n-lat-verts)
+                                                         color)))))
+         (texture (build-texture texture texture-width texture-height texture-offset
+                                 resolution+1 n-lat-verts)))
+    (mesh-make (list position
+                     normal
+                     color
+                     texture)
+               indices
+               winding
+               index-type
+               color-type
+               texture-type
+               2
+               mode)))
+
+(define (cylinder-mesh length radius vertical-subdivisions resolution
+                       #!key color (normals? #f) (winding #:ccw) (mode #:triangles) 
+                       (index-type #:ushort) (color-type #:ushort) (texture-type #:ushort) 
+                       texture texture-width texture-height (texture-offset (list 0 0)))
+  (when (< resolution 3)
+    (error 'cylinder-mesh "resolution not be less than 3:" resolution))
+  (when (< vertical-subdivisions 1)
+    (error 'cylinder-mesh "vertical-subdivisions must not be less than 1:"
+           vertical-subdivisions))
+  (let* ((angle-increment (* 2 (/ pi resolution)))
+         (resolution+1 (add1 resolution))
+         (circle-points (map (lambda (angle)
+                               (cons (- (cos angle)) (sin angle)))
+                             (iota resolution+1 0 angle-increment)))
+         (vertices (append-ec (:list y (iota (add1 vertical-subdivisions)
+                                             length
+                                             (- (/ length vertical-subdivisions))))
+                              (:list circle-point circle-points)
+                                 (list (* (car circle-point) radius)
+                                       y
+                                       (* (cdr circle-point) radius))))
+         (indices (append-ec (:range row vertical-subdivisions)
+                             (:range column resolution)
+                             (let* ((row (* row resolution+1))
+                                    (next-row (+ row resolution+1))
                                     (next-column (add1 column))
                                     (top-left (+ row column))
                                     (top-right (+ row next-column))
@@ -186,95 +383,20 @@
                                      bottom-right
                                      top-right))))
          (position (cons 'position vertices))
-         (normal (and normals? (cons 'normal unit-sphere)))
-         (color (and color (cons 'color
-                                 (flatten (list-tabulate (* (add1 resolution)
-                                                            n-lat-verts)
-                                                         color)))))
-         (texture (build-texture texture texture-width texture-height texture-offset
-                                 (add1 resolution) n-lat-verts)))
-    ;; (let loop ((t (cdr texture))
-    ;;            (p (cdr position))
-    ;;            (i 1))
-    ;;   (unless (null? t)
-    ;;     (format #t "(~$ ~$ ~$) (~$ ~$)~%"
-    ;;             (car p) (cadr p) (caddr p)
-    ;;             (car t) (cadr t))
-    ;;     (when (= (modulo i (add1 resolution)) 0)
-    ;;       (newline))
-    ;;     (loop (cddr t) (cdddr p) (add1 i))))
-    (mesh-make (list position
-                     normal
-                     color
-                     texture)
-               indices
-               winding
-               index-type
-               color-type
-               texture-type
-               2 ; TODO 3d texture
-               mode)))
-
-(define (cylinder-mesh length radius vertical-subdivisions resolution
-                       #!key color (normals? #f) (winding #:ccw) (mode #:triangles) 
-                       (index-type #:ushort) (color-type #:ushort) (texture-type #:ushort) 
-                       texture texture-width texture-height (texture-offset (list 0 0)))
-  (when (< resolution 3)
-    (error 'cylinder-mesh "resolution not be less than 3:" resolution))
-  (when (< vertical-subdivisions 1)
-    (error 'cylinder-mesh "vertical-subdivisions must not be less than 1:"
-           vertical-subdivisions))
-  (let* ((angle-increment (/ (* 2 pi) resolution))
-         (height-increment (/ length vertical-subdivisions))
-         (unit-circle (map (lambda (angle)
-                               (cons (cos angle)
-                                     (sin angle)))
-                             (iota resolution 0 angle-increment)))
-         (circle-points (map (lambda (point)
-                               (cons (* radius (car point))
-                                     (* radius (cdr point))))
-                             unit-circle))
-         (position (cons 'position
-                         (append-ec (:range y 0 (* (add1 vertical-subdivisions)
-                                                   height-increment)
-                                            height-increment)
-                                    (:list circle-point circle-points)
-                                    (list (car circle-point)
-                                          y
-                                          (cdr circle-point)))))
-         (indices (append-ec (:range i vertical-subdivisions)
-                             (:range column resolution)
-                             (let* ((row (* i resolution))
-                                    (next-row (* (add1 i) resolution))
-                                    (next-column (if (= column (sub1 resolution))
-                                                     0
-                                                     (add1 column)))
-                                    (bottom-right (+ row column))
-                                    (bottom-left (+ row next-column))
-                                    (top-right (+ next-row column))
-                                    (top-left (+ next-row next-column)))
-                               (list bottom-left
-                                     bottom-right
-                                     top-right
-                                     bottom-left
-                                     top-right
-                                     top-left))))
-         (normal (and normals?
-                      (cons 'normal
-                            (append-ec (:range y 0 (* (add1 vertical-subdivisions)
-                                                      height-increment)
-                                               height-increment)
-                                       (:list point unit-circle)
-                                       (list (car point)
-                                             0
-                                             (cdr point))))))
+         (normal-circle (append-ec (:list circle-point circle-points)
+                                   (list (car circle-point)
+                                         0
+                                         (cdr circle-point))))
+         (normal (and normals? (cons 'normal
+                                     (append-ec (:range i (add1 vertical-subdivisions))
+                                                normal-circle))))
          (color (and color
                      (cons 'color
-                           (flatten (list-tabulate (* resolution
+                           (flatten (list-tabulate (* resolution+1
                                                       (add1 vertical-subdivisions))
                                                    color)))))
-         (texture #f ;TODO 
-          ))
+         (texture (build-texture texture texture-width texture-height texture-offset
+                                 resolution+1 (add1 vertical-subdivisions))))
     (mesh-make (list position
                      normal
                      color
@@ -284,5 +406,5 @@
                index-type
                color-type
                texture-type
-               2 ; TODO
+               2
                mode)))
