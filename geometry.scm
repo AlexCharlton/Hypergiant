@@ -49,7 +49,7 @@
                          initial-elements: ,points)
              mode: mode))
 
-(define (rectangle-mesh w h #!key (centered #t) color (mode #:triangles) (winding #:ccw)
+(define (rectangle-mesh w h #!key (centered? #t) color (mode #:triangles) (winding #:ccw)
                         (index-type #:ushort) (color-type #:ushort)
                         (texture-type #:ushort) texture
                         texture-width texture-height (texture-offset (list 0 0)))
@@ -111,8 +111,12 @@
                                 (offset-v (cadr texture-offset)))
                             (append (list offset-u offset-v)
                                     (append-ec (:list point unit-circle)
-                                               (list (+ offset-u (car point))
-                                                     (+ offset-v (cadr point))))))))
+                                               (list (+ offset-u
+                                                        (* texture-radius
+                                                           (car point)))
+                                                     (+ offset-v
+                                                        (* texture-radius
+                                                           (- (cdr point))))))))))
                    (else #f))))
     (mesh-make (list position
                      color
