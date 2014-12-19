@@ -140,9 +140,24 @@ This extension of the Hyperscene function of the same name (along with Hypergian
 
 When `PIPELINE` is a render-pipeline the node data that is created is a glls [renderable](http://wiki.call-cc.org/eggref/4/glls#renderables) object. `MESH`, `VAO`, `MODE`, `N-ELEMENTS`, `ELEMENT-TYPE`, and `OFFSET` all function as they do when making a renderable. Additionally, `MESH` may be passed to `add-node` when its VAO has not yet been created (i.e. with [`mesh-make-vao`](http://api.call-cc.org/doc/gl-utils/mesh-make-vao%21)), and `mesh-make-vao!` will be called automatically, influenced by the optional `USAGE` keyword (defaulting to `+static`). `DRAW-ARRAYS?` is a boolean that indicates whether or not the renderable’s array rendering function should be used (i.e. `draw-arrays` is used instead of `draw-elements`). `DRAW-ARRAYS?` defaults to `#t` if `MESH` has no index data, and `#f` otherwise. `add-node` accepts other keyword `ARGS`, which are used to set the value for each uniform in the pipeline, as required by glls renderable makers.
 
-`add-node`, along with `define-pipeline` also does some magic so that things keep working when the program is evaluated (as opposed to compiled), but that’s all we’re going to say about that.
+`add-node` appends a number of Hyperscene values to its renderable creation call, for convenience. Each variable is combined with the following keys (which may correspond to the names of uniforms in the renderable’s pipeline):
+
+- `mvp: (current-camera-model-view-projection)`
+- `view: (current-camera-view)`
+- `projection: (current-camera-projection)`
+- `view-projection: (current-camera-view-projection)`
+- `camera-position: (current-camera-position)`
+- `inverse-transpose-model: (current-inverse-transpose-model)`
+- `n-lights: (n-current-lights)`
+- `light-positions: (current-light-positions)`
+- `light-colors: (current-light-colors)`
+- `light-intensities: (current-light-intensities)`
+- `light-directions: (current-light-directions)`
+- `ambient: (current-ambient-light) `
 
 It’s worth noting that when `add-node` is called with a mesh, no references to that node are kept. Make sure you keep your meshes live, lest they become garbage.
+
+`add-node`, along with `define-pipeline` does some magic so that things keep working when the program is evaluated (as opposed to compiled), but the end result is that it should Just Work.
 
 ### Render-pipelines
     [macro] (define-pipeline PIPELINE-NAME . SHADERS)
@@ -157,12 +172,128 @@ Accepts arguments identical to glls’ [`define-pipeline`](http://api.call-cc.or
 Since `define-pipeline` defines multiple objects, this macro exports everything related to each pipeline in `PIPELINES`.
 
 ### Pre-defined pipelines and shaders
-mesh-pipeline
-color-pipeline
-texture-pipeline
-sprite-pipeline
-text-pipeline
-phong-lighting
+For convenience, Hypergiant provides a number of pipelines and shaders to cover common operations. Don’t forget the each pipeline has a `NAME-render-pipeline` counterpart that should be used with `add-node`.
+
+    [constant] Pipeline: mesh-pipeline
+
+**Attributes**
+
+- `position` – `#:vec3`
+
+**Uniforms**
+
+- `mvp` – `#:mat4`
+- `color` – `#:vec3`
+
+A very basic pipeline for shading with a flat colour.
+
+    [constant] Pipeline: color-pipeline
+
+**Attributes**
+
+- `position` – `#:vec3`
+- `color` – `#:vec3`
+
+**Uniforms**
+
+- `mvp` – `#:mat4`
+
+A pipeline with a colour associated with each vertex.
+
+    [constant] Pipeline: texture-pipeline
+
+**Attributes**
+
+- `position` – `#:vec3`
+- `tex-coord` – `#:vec2`
+
+**Uniforms**
+
+- `mvp` – `#:mat4`
+- `tex` – `#:sampler-2d`
+
+A pipeline with a 2D texture coordinate associated with each vertex.
+
+    [constant] Pipeline: sprite-pipeline
+
+**Attributes**
+
+- `position` – `#:vec3`
+- `tex-coord` – `#:vec2`
+
+**Uniforms**
+
+- `mvp` – `#:mat4`
+- `tex` – `#:sampler-2d`
+
+A pipeline with a 2D texture coordinate associated with each vertex, with possible transparency (i.e. defined with `define-alpha-pipeline`).
+
+    [constant] Shader: text-pipeline
+
+**Attributes**
+
+- `position` – `#:vec3`
+- `tex-coord` – `#:vec2`
+
+**Uniforms**
+
+- `mvp` – `#:mat4`
+- `tex` – `#:sampler-2d`
+- `color` – `#:vec3`
+
+A pipeline for use with a mono-chrome alpha texture, such as a texture atlas. The opaque sections are shaded with the given colour.
+
+    [constant] phong-lighting
+
+**Uniforms**
+
+- `camera-position` – `#:vec3`
+- `ambient` – `#:vec3`
+- `n-lights` – `#:int`
+- `light-positions` – `(#:array #:vec3 N-LIGHTS)`
+- `light-colors` – `(#:array #:vec3 N-LIGHTS)`
+- `light-intensities` – `(#:array #:float N-LIGHTS)`
+- `material` – `#:vec4`
+
+Note that all of these uniforms are automatically provided by `add-node`, although they depend on Hyperscene’s lighting extension to be activated. E.g. `(activate-extension SCENE (lighting)`
+
+**Exports**
+    (light (SURFACE-COLOR #:vec4) (POSITION #:vec3) (NORMAL #:vec3)) -> #:vec4
+
+This shader is designed to provided per-fragment Phong lighting, and provides a single function used for calculating the fragment colour: `light`. Given a base, `SURFACE-COLOR` the resulting colour after lighting is calculated given the fragments’ `POSITION` and `NORMAL` (and the uniforms listed above).
+
+Here is an example of a simple pipeline using this shader:
+
+``` Scheme
+(define-pipeline phong-pipeline 
+  ((#:vertex input: ((position #:vec3) (normal #:vec3) (tex-coord #:vec2))
+             uniform: ((mvp #:mat4) (model #:mat4))
+             output: ((p #:vec3) (n #:vec3) (t #:vec2)))
+   (define (main) #:void
+     (set! gl:position (* mvp (vec4 position 1.0)))
+     (set! p (vec3 (* model (vec4 position 1))))
+     (set! t tex-coord)
+     (set! n normal)))
+  ((#:fragment input: ((n #:vec3) (p #:vec3) (t #:vec2))
+               use: (phong-lighting)
+               uniform: ((camera-position #:vec3)
+                         (inverse-transpose-model #:mat4)
+                         (tex #:sampler-2d)
+                         (ambient #:vec3)
+                         (n-lights #:int)
+                         (light-positions (#:array #:vec3 8))
+                         (light-colors (#:array #:vec3 8))
+                         (light-intensities (#:array #:float 8))
+                         (material #:vec4))
+               output: ((frag-color #:vec4)))
+   (define (main) #:void
+     (set! frag-color (light (texture tex t) p
+                             (normalize (* (mat3 inverse-transpose-model) n)))))))
+```
+
+    [procedure] (set-max-lights! N)
+
+This function replaces `set-max-lights!`, from Hyperscene. It should be used in the same way. The only difference is that this function selects an appropriate `phong-lighting` shader based on the number of lights set. The `phong-lighting` shaders differ in the array size of the uniforms, and an appropriate `N` value should be used in the uniforms of any pipeline using `phong-lighting`: the size of each uniform array should be greater than or equal to `N` and a power of 2 from 8 to 64.
 
 ### Geometry
 Hypergiant provides numerous functions for generating [gl-utils meshe](http://api.call-cc.org/doc/gl-utils#sec:gl-utils-mesh) primitives. The attributes of these meshes are all named with the same convention as the [pre-defined pipelines](#pre-defined-pipelines-and-shaders): The vertex position, normal, three element colour, and texture coordinate attributes are named `position`, `normal`, `color`, and `tex-coord`, respectively. Positions and normals are always `vec3`s, represented as floats in memory, while the type of the other attributes can be controlled with arguments.

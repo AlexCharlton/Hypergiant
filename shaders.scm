@@ -128,7 +128,6 @@
 
 (define phong-lighting phong-lighting-8)
 
-;; ; TODO Test
 (define (set-max-lights! n)
   (scene:set-max-lights! n)
   (set! phong-lighting (cond
