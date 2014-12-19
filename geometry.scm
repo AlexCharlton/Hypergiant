@@ -162,7 +162,8 @@
                              (let ((face (* i 4)))
                                (map (cut + face <>)
                                     (list 0 2 3 0 3 1)))))
-         (position (cons 'position (map (cut * length <>)
+         (half-length (* 0.5 length))
+         (position (cons 'position (map (cut * half-length <>)
                                         unit-cube)))
          (normal (and normals? (cons 'normal (append front front front front
                                                      right right right right
