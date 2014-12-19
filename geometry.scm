@@ -53,7 +53,7 @@
                         (index-type #:ushort) (color-type #:ushort)
                         (texture-type #:ushort) texture
                         texture-width texture-height (texture-offset (list 0 0)))
-  (let* ((position (cons 'position (if centered
+  (let* ((position (cons 'position (if centered?
                                        (let* ((x2 (* w 0.5))
                                               (y2 (* h 0.5))
                                               (x (- x2))
