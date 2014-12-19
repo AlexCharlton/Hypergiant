@@ -1,8 +1,17 @@
+;;;; inspector.scm
+
+;;;; This example illustrates the geometric primitives offered by hypergiant.
+
+;;;; NOTE:
+;;;; If this file is compiled, since it uses glls-render, it must also be linked with OpenGL
+;;;; E.g.:
+;;;; csc -lGL inspector.scm
+
+;;;; Use arrow keys (and shift) to rotate, zoom camera. Numbers 1-6 toggle different meshes.
+
 (import chicken scheme)
 (use hypergiant)
 
-(define orange (f32vector 0.7 0.2 0.1))
-(define black (f32vector 0 0 0))
 (define scene (make-parameter #f))
 (define camera (make-parameter #f))
 (define pan (make-parameter 0))
@@ -20,7 +29,6 @@
 (define earth (make-parameter #f))
 (define dock (make-parameter #f))
 (define active-node (make-parameter #f))
-
 (define shiny-material (make-material 0.5 0.5 0.5 10))
 
 (define-pipeline phong-pipeline 
