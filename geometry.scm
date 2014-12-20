@@ -16,14 +16,20 @@
 
 (define (mesh-make vertices indices winding index-type color-type texture-type
                    texture-dims mode)
-  (let ((attributes (list '(position #:float 3)
-                          '(normal #:float 3)
-                          `(color ,color-type 3 normalized: #t)
-                          `(tex-coord ,texture-type ,texture-dims normalized: #t))))
-    (make-mesh vertices: `(attributes: ,attributes
-                           initial-elements: ,(remove not vertices))
+  (let* ((vertices (remove not vertices))
+         (attributes (list (and (alist-ref 'position vertices)
+                                '(position #:float 3))
+                           (and (alist-ref 'normal vertices)
+                                '(normal #:float 3))
+                           (and (alist-ref 'color vertices)
+                                `(color ,color-type 3 normalized: #t))
+                           (and (alist-ref 'tex-coord vertices)
+                                `(tex-coord ,texture-type ,texture-dims
+                                            normalized: #t)))))
+    (make-mesh vertices: `(attributes: ,(remove not attributes)
+                                       initial-elements: ,vertices)
                indices: `(type: ,index-type
-                          initial-elements: ,(index-winding indices winding))
+                                initial-elements: ,(index-winding indices winding))
                mode: mode)))
 
 (define (build-color color n-verts)
