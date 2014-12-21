@@ -180,7 +180,7 @@
 (define (set-cursor-position x y)
   (%set-cursor-position (%window) x y))
 
-(define (get-cursor-world-position)
+(define (get-cursor-world-position camera)
   (define (scale x) (sub1 (* x 2)))
   (let-values (((w h) (get-window-size))
                ((x y) (get-cursor-position)))
@@ -189,7 +189,7 @@
            (y (scale (- 1 (/ y h))))
            (near (make-point x y -1))
            (far (make-point x y 1)))
-      (inverse (scene:current-camera-view-projection) (->pointer ivp))
+      (inverse (scene:camera-view-projection camera) (->pointer ivp))
       (m*vector! ivp near)
       (m*vector! ivp far)
       (values near far))))
