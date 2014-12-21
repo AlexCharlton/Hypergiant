@@ -1,8 +1,23 @@
-(import chicken scheme)
+;;;; go.scm
 
+;;;; This example implements the game of Go.
+;;;; Click to place a stone, escape quits.
+
+;; If /usr/share/fonts/truetype/msttcorefonts/arial.ttf is not on your system, substitute with a font that is.
+(define font "/usr/share/fonts/truetype/msttcorefonts/arial.ttf")
+
+;;;; NOTE:
+;;;; If this file is compiled, since it uses glls-render, it must also be linked with OpenGL
+;;;; E.g.:
+;;;; csc -lGL go.scm
+
+(import chicken scheme)
 (use hypergiant miscmacros srfi-42 srfi-99 data-structures srfi-1 srfi-69)
 
+;;;
 ;;; Rules
+;;;
+
 ;; Turns
 (define stone-colors (make-parameter '(black white)))
 (define turn (make-parameter 'black))
@@ -86,16 +101,13 @@
        (state-nodes (game-state))))
 
 (define (generate-state)
-  (let* ((jitter (/ 1 (n-nodes) 3))
-         (nodes (list-ec (: i (n-nodes))
-                         (: j (n-nodes))
-                         (make-node (cons j i)
-                                    (make-point (+ (/ j (sub1 (n-nodes)))
-                                                   (* jitter (random-float)))
-                                                (+ (/ i (sub1 (n-nodes)))
-                                                   (* jitter (random-float)))
-                                                0.0003)
-                                    #f))))
+  (let ((nodes (list-ec (: i (n-nodes))
+                        (: j (n-nodes))
+                        (make-node (cons j i)
+                                   (make-point (/ j (sub1 (n-nodes)))
+                                               (/ i (sub1 (n-nodes)))
+                                               0)
+                                   #f))))
     (game-state (make-state nodes '()))))
 
 (define (update-state-chains! fun)
@@ -209,30 +221,20 @@
                   (signal (suicide-exn chain))))
               friendly-chains)))
 
-;; Stone
-(define stone-types '(0 1 2 3 4 5))
-
-(define (next-type type)
-  (let ((next-types (member type stone-types)))
-    (if (= (length next-types) 1)
-        (car next-types)
-        (cadr next-types))))
-
+;; Stones
 (define-record-type stone
   #t #t
   color
-  type
-  (mesh)
   (scene-node))
 
 (define (delete-stone node)
   (node-stone-set! node #f)
   (update-chains-with-node node))
 
-(define (add-stone node color type)
+(define (add-stone node color)
   (when (node-stone node)
     (signal (make-property-condition 'game-logic 'occupied node)))
-  (node-stone-set! node (make-stone color type #f #f))
+  (node-stone-set! node (make-stone color #f))
   (update-chains-with-node node))
 
 (define (place-stone index)
@@ -244,7 +246,7 @@
          (let ((node (get-node index)))
            (condition-case
                (begin
-                 (add-stone node color (car stone-types))
+                 (add-stone node color)
                  (check-for-dead-chains color)
                  (check-for-repeated-state)
                  (update-scene old-state (game-state))
@@ -320,81 +322,110 @@
                                          (alist-ref it score))
                                       score))))
               (empty-chains))
+    (for-each (lambda (color)
+                (if (= (alist-ref color score) 361)
+                    (alist-update! color 1 score)))
+              (stone-colors))
     score))
 
-(define (display-score)
-  (print (get-score)))
 
+;;;
 ;;; Rendering
-(define board-rect (rectangle-mesh 1 1 centered: #f
-                                   texture-width: 1 texture-height: 1))
-
+;;;
 (define scene (make-parameter #f))
 (define camera (make-parameter #f))
+(define lines (make-parameter #f))
+(define score (make-parameter #f))
+(define score-mesh (make-parameter #f))
+(define shiny-material (make-material 0.5 0.5 0.5 10))
+(define colors `((white . ,(f32vector 1 1 1))
+                 (black . ,(f32vector 0 0 0))))
+(define stone-radius (/ 40))
+(define stone-mesh (sphere-mesh stone-radius 16 normals?: #t))
+(m*vector-array! (3d-scaling 1 1 0.4) (mesh-vertex-data stone-mesh)
+                 stride: (mesh-stride stone-mesh))
+(define board-mesh (cube-mesh 1 normals?: #t))
+(m*vector-array! (3d-scaling 1.2 1.2 0.06) (mesh-vertex-data board-mesh)
+                 stride: (mesh-stride board-mesh))
+(define marker (circle-mesh (/ 120) 12))
 
-(define-pipeline noise-shader
-  ((#:vertex input: ((position #:vec3))
-             output: ((pos #:vec2))) 
-   (define (main) #:void
-     (set! pos (* (~~ position x y) 2))
-     (set! gl:position (vec4 (- pos
-                                1)
-                             0 1))))
-  ((#:fragment input: ((pos #:vec2))
-               output: ((frag-color #:vec4))
-               use: (simplex-noise-2d))
-   (define (grass) #:vec4
-     (let ((n #:float (* (snoise (* pos 128)) 0.2)))
-       (+ (vec4 0.2 0.5 0 1) n)))
-   (define (dirt) #:vec4
-     (let ((n #:float (* (snoise (* pos 4)) 0.1)))
-       (+ (vec4 1 0.8 0.4 1) n)))
-   (define (main) #:void
-     (let ((n #:float (clamp (* 1.3 (+ 0.4 (abs (fractal-snoise pos 5 1 0.5 2 0.5))))
-                             0 1)))
-       (set! frag-color (+ (* (grass) n)
-                           (* (dirt) (- 1 n))))))))
-
+;; Shaders
 (define-pipeline board-shader
-  ((#:vertex input: ((position #:vec3) (tex-coord #:vec2))
-             uniform: ((mvp #:mat4))
-             output: ((tex-c #:vec2)))
+  ((#:vertex input: ((position #:vec3) (normal #:vec3))
+             uniform: ((mvp #:mat4) (model #:mat4))
+             output: ((p #:vec3) (n #:vec3)))
    (define (main) #:void
-     (let ((pos #:vec2 (~~ position x y)))
-       (set! gl:position (* mvp (vec4 (- (* pos 1.2) 0.1) 0 1.0)))
-       (set! tex-c tex-coord))))
-  ((#:fragment input: ((tex-c #:vec2))
-               uniform: ((tex #:sampler-2d))
+     (set! p position)
+     (set! n normal)
+     (set! gl:position (* mvp (vec4 position 1.0)))))
+  ((#:fragment input: ((p #:vec3) (n #:vec3))
+               uniform: ((camera-position #:vec3)
+                         (inverse-transpose-model #:mat4)
+                         (ambient #:vec3)
+                         (n-lights #:int)
+                         (light-positions (#:array #:vec3 8))
+                         (light-colors (#:array #:vec3 8))
+                         (light-intensities (#:array #:float 8))
+                         (material #:vec4))
+               use: (simplex-noise-3d phong-lighting)
+               output: ((frag-color #:vec4)))
+   (define (fine) #:vec4
+     (let ((n #:float (snoise (vec3 (* p.x 32) (* p.y 128) (* p.z 32)))))
+       (vec4 (+ (vec3 0.5 0.4 0.2) (* n 0.1)) 1)))
+   (define (course) #:vec4
+     (let ((n #:float (snoise (vec3 (* p.x 4) (* p.y 32) (* p.z 4)))))
+       (vec4 (+ (vec3 0.5 0.4 0.2) (* n 0.1)) 1)))
+   (define (main) #:void
+     (set! frag-color (light (* (fine) (course)) p
+                             (normalize (* (mat3 inverse-transpose-model) n)))))))
+
+(define-pipeline phong-pipeline 
+  ((#:vertex input: ((position #:vec3) (normal #:vec3))
+             uniform: ((mvp #:mat4) (model #:mat4))
+             output: ((p #:vec3) (n #:vec3) (t #:vec2)))
+   (define (main) #:void
+     (set! gl:position (* mvp (vec4 position 1.0)))
+     (set! p (vec3 (* model (vec4 position 1))))
+     (set! n normal)))
+  ((#:fragment input: ((n #:vec3) (p #:vec3))
+               use: (phong-lighting)
+               uniform: ((camera-position #:vec3)
+                         (inverse-transpose-model #:mat4)
+                         (color #:vec3)
+                         (ambient #:vec3)
+                         (n-lights #:int)
+                         (light-positions (#:array #:vec3 8))
+                         (light-colors (#:array #:vec3 8))
+                         (light-intensities (#:array #:float 8))
+                         (material #:vec4))
                output: ((frag-color #:vec4)))
    (define (main) #:void
-     (set! frag-color (texture tex tex-c)))))
+     (set! frag-color (light (vec4 color 1) p
+                             (normalize (* (mat3 inverse-transpose-model) n)))))))
 
-(define colors '((white (1 1 1) (1 0.8 0.8) (1 0.6 0.6)
-                        (1 0.4 0.4) (1 0.2 0.2) (1 0 0))
-                 (black (0 0 0) (0 0 0.2) (0 0 0.4)
-                        (0 0 0.6) (0 0 0.8) (0 0 1))))
-
-(define (stone-mesh color type)
-  (let ((color (list-ref (alist-ref color colors) type)))
-    (rectangle-mesh (/ 30) (/ 30)
-                    color-type: #:uchar
-                    color: (lambda (_) color))))
-
+;; Stones
 (define (add-stone-to-scene stone position)
-  (let* ((mesh (stone-mesh (stone-color stone)
-                              (stone-type stone)))
-         (n (add-node (scene) color-pipeline-render-pipeline
-                      mesh: mesh)))
-    (set-node-position! n (v+ position (make-point 0 0 0.0003)))
-    (stone-mesh-set! stone mesh)
+  (let ((n (add-node (scene) phong-pipeline-render-pipeline
+                     mesh: stone-mesh
+                     color: (alist-ref (stone-color stone) colors)
+                     material: shiny-material
+                     position: (v+ position
+                                   (make-point 0 0 (* stone-radius
+                                                      0.4)))
+                     radius: stone-radius)))
     (stone-scene-node-set! stone n)))
 
-(define brown (f32vector 0.8 0.6 0.4))
-(define lines (make-parameter #f))
+;; Board
+(define (generate-board)
+  (add-node (scene)
+            board-shader-render-pipeline
+            mesh: board-mesh
+            material: shiny-material
+            position: (make-point 0.5 0.5 -0.03)))
 
 (define (generate-lines)
-  (let* ((rect (rectangle-mesh 1 (/ 1 256)))
-         (road (lambda (start end)
+  (let* ((rect (rectangle-mesh 1 (/ 256)))
+         (line (lambda (start end)
                  (let ((length (vector-magnitude (v- start end)))
                        (angle (atan (- (point-y end) (point-y start))
                                     (- (point-x end) (point-x start)))))
@@ -409,55 +440,55 @@
                                      (let loop ((points (map node-point row)))
                                        (if (null? (cdr points))
                                            '()
-                                           (cons (road (car points) (cadr points))
+                                           (cons (line (car points) (cadr points))
                                                  (loop (cdr points))))))
                                    nodes)))
          (node-rows (chop (state-nodes (game-state))
                           (n-nodes)))
          (e-w-lines (make-lines node-rows))
-         (n-s-lines (make-lines (apply zip node-rows))))
-    (lines (mesh-transform-append 'position (append e-w-lines n-s-lines)))
+         (n-s-lines (make-lines (apply zip node-rows)))
+         (3nodes (+ (/ 3 (n-nodes))
+                    (/ 120)))
+         (16nodes (- (/ 16 (n-nodes))
+                     (/ 120)))
+         (marker-points `((,3nodes . ,3nodes) (,3nodes . 0.5) (,3nodes . ,16nodes)
+                          (0.5 . ,3nodes) (0.5 . 0.5) (0.5 . ,16nodes)
+                          (,16nodes . ,3nodes) (,16nodes . 0.5) (,16nodes . ,16nodes)))
+         (markers (map (lambda (p)
+                         (cons marker
+                               (translation (make-point (car p) (cdr p) 0))))
+                       marker-points)))
+    (lines (mesh-transform-append 'position (append e-w-lines n-s-lines
+                                                    markers)))
     (add-node (scene) mesh-pipeline-render-pipeline
               mesh: (lines)
-              color: brown)))
+              color: (alist-ref 'black colors)
+              position: (make-point 0 0 0.001))))
 
-(define (generate-map)
-  (define map-rect (rectangle-mesh 1 1 centered: #f))
-  (mesh-make-vao! map-rect (pipeline-mesh-attributes noise-shader))
-  (let ((renderable (make-noise-shader-renderable mesh: map-rect)))
-    (receive (fbo tex r) (gl:create-framebuffer 512 512)
-      (gl:with-framebuffer fbo
-        (gl:clear (bitwise-ior gl:+color-buffer-bit+ gl:+depth-buffer-bit+))
-        (render-noise-shader renderable))
-      (gl:delete-renderbuffer r)
-      (gl:delete-framebuffer fbo)
-      tex)))
+;; Score
+(define score-font (make-parameter #f))
 
-(define (generate-board)
-  (let ((tex (generate-map)))
-    (add-node (scene)
-              board-shader-render-pipeline
-              mesh: board-rect
-              tex: tex)))
+(define (update-score)
+  (let* ((s (get-score))
+         (black (string-append "Black: " (number->string (alist-ref 'black s))))
+         (white (string-append "White: " (number->string (alist-ref 'white s)))))
+    (when (score)
+      (delete-node (score)))
+    (score-mesh (string-mesh (string-append black "  " white) (score-font)))
+    (score (add-node (ui) text-pipeline-render-pipeline
+                     tex: (face-atlas (score-font))
+                     color: (alist-ref 'black colors)
+                     position: (make-point 10 -10 0)
+                     mesh: (score-mesh)))))
 
+;;;
 ;;; Input
-(define pan-x (make-parameter 0))
-(define pan-y (make-parameter 0))
-(define zoom (make-parameter 0))
-(define pan-speed (/ 1 100))
-
+;;;
 (define keys (make-bindings
-              `((quit ,+key-escape+ press: ,stop)
-                (pan-up ,+key-up+ toggle: ,pan-y)
-                (pan-down ,+key-down+ reverse-toggle: ,pan-y)
-                (zoom-in ,+key-up+ mods: (,+mod-shift+) reverse-toggle: ,zoom)
-                (zoom-out ,+key-down+ mods: (,+mod-shift+) toggle: ,zoom)
-                (pan-right ,+key-right+ toggle: ,pan-x)
-                (pan-left ,+key-left+ reverse-toggle: ,pan-x)
-                (score ,+key-s+ press: ,display-score))))
+              `((quit ,+key-escape+ press: ,stop))))
 
 (define (get-cursor-board-position)
-  (receive (near far) (get-cursor-world-position)
+  (receive (near far) (get-cursor-world-position (camera))
     (let ((u (/ (point-z near) (- (point-z near) (point-z far)))))
       (make-point (+ (point-x near) (* u (- (point-x far) (point-x near))))
                   (+ (point-y near) (* u (- (point-y far) (point-y near))))
@@ -470,35 +501,35 @@
                     (inexact->exact (point-y n)))))
 
 (define (cursor-board-press)
-  (place-stone (get-nearest-index)))
+  (place-stone (get-nearest-index))
+  (update-score))
 
 (define mouse (make-bindings
                `((left-click ,+mouse-button-left+ press: ,cursor-board-press))))
 
-(define (update delta)
-  (move-camera! (camera)
-               (make-point (+ (* (pan-x) pan-speed)
-                              (* (- (pan-y)) pan-speed)
-                              (* (zoom) pan-speed))
-                           (+ (* (pan-x) pan-speed)
-                              (* (pan-y) pan-speed)
-                              (* (- (zoom)) pan-speed))
-                           (* (zoom) pan-speed))))
-
+;;;
 ;;; Initialization
+;;;
 (define (init)
   (push-key-bindings keys)
   (push-mouse-bindings mouse)
-  (gl:clear-color 0.02 0.01 0.04 1)
+  (gl:clear-color 0.8 0.8 0.8 1)
   (scene (make-scene))
-  (camera (make-camera #:perspective #:position (scene) near: 0.001 angle: 45))
+  (activate-extension (scene) (lighting))
+  (set-ambient-light! (scene) (make-point 0.4 0.4 0.4))
+  (let ((light (add-light (scene) (make-point 1 1 1) 100)))
+    (set-node-position! light (make-point 0 0 2)))
+  (camera (make-camera #:perspective #:position (scene) near: 0.001 angle: 35))
 
-  (set-camera-position! (camera) (make-point 1.4 -0.4 1))
+  (set-camera-position! (camera) (make-point 1.6 -0.6 1.3))
   (quaternion-rotate-z (degrees->radians 45)
                        (quaternion-rotate-x (degrees->radians 45)
                                             (camera-rotation (camera))))
   (generate-board)
   (generate-state)
-  (generate-lines))
+  (generate-lines)
 
-(start 800 600 "Go" resizable: #f init: init update: update)
+  (score-font (load-face font 20))
+  (update-score))
+
+(start 800 600 "Go" resizable: #f init: init)
