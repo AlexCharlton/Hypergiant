@@ -475,7 +475,7 @@
     (when (score)
       (delete-node (score)))
     (score-mesh (string-mesh (string-append black "  " white) (score-font)))
-    (score (add-node (ui) text-pipeline-render-pipeline
+    (score (add-node ui text-pipeline-render-pipeline
                      tex: (face-atlas (score-font))
                      color: (alist-ref 'black colors)
                      position: (make-point 10 -10 0)
