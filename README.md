@@ -132,6 +132,14 @@ A parameter that must be set to a two argument function, which is called when th
 ### Scenes
 Hypergiant reexports most of [Hyperscene](http://wiki.call-cc.org/eggref/4/hyperscene) except for `init`, `add-pipeline` `delete-pipeline`, and `resize-cameras`, as it manages this functionality. `init` and `resize-cameras` are handled by `start` while `add/delete-pipeline` are handled by Hypergiant’s `define-pipline`. `add-node` is modified as described below.
 
+    [constant] ui
+
+A Hyperscene scene that has one orthographic camera, included for UI elements. The camera is always sized to the window and positioned such that its upper left corner is `(0 0)`. The UI scene’s camera is always rendered last.
+
+    [parameter] resize-hooks
+
+A parameter that contains functions of two arguments, width and height, that are called every time the window is resized.
+
     [procedure] (add-node PARENT PIPELINE [mesh: MESH] [vao: VAO] [mode: MODE] [n-elements: N-ELEMENTS] [element-type: ELEMENT-TYPE] [offset: OFFSET] [usage: USAGE] [draw-arrays?: DRAW-ARRAYS?] [position: POSITION] [radius: RADIUS] . ARGS)
 
 This extension of the Hyperscene function of the same name (along with Hypergiant’s extension of `define-pipline`) is where the majority of the magic of Hypergiant happens. Unlike its cousin, Hypergiant’s `add-node`’s `PIPELINE` argument accepts the special `*-render-pipeline` object defined by Hypergiant’s `define-pipeline` rather than a Hyperscene pipeline.  Because of this, Hyperscene pipelines never need to be manually created. When a non-render-pipeline (i.e. a Hyperscene pipeline) is passed to `add-node`, it acts identically to the Hyperscene version, except for the addition of `POSITION` and `RADIUS`.
