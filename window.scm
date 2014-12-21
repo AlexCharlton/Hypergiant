@@ -2,22 +2,21 @@
         stop
         get-window-size
         ui
-        ui-camera
         resize-hooks)
 
 (define *last-render-time* 0)
-(define ui (make-parameter #f))
-(define ui-camera (make-parameter #f))
+(define ui #f)
+(define *ui-camera* #f)
 
 (define (render)
     (%swap-buffers (%window))
     (gl:clear (bitwise-ior gl:+color-buffer-bit+ gl:+depth-buffer-bit+))
-    (scene:activate-camera (ui-camera))
+    (scene:activate-camera *ui-camera*)
     (scene:render-cameras)
-    (scene:deactivate-camera (ui-camera)))
+    (scene:deactivate-camera *ui-camera*))
 
 (define (move-ui-camera w h)
-  (scene:set-camera-position! (ui-camera)
+  (scene:set-camera-position! *ui-camera*
                               (make-point (/ w 2) (/ h -2) 1)))
 
 (define resize-hooks (make-parameter (list move-ui-camera)))
@@ -46,9 +45,9 @@
     ((not gles) (gl:enable gl:+multisample+))
     (else))
 
-  (ui (scene:make-scene))
-  (ui-camera (scene:make-camera #:ortho #:position (ui)))
-  (scene:deactivate-camera (ui-camera))
+  (set! ui (scene:make-scene))
+  (set! *ui-camera* (scene:make-camera #:ortho #:position ui))
+  (scene:deactivate-camera *ui-camera*)
   (resize #f width height)
   (glls:compile-pipelines)
   ((get-keyword init: args (lambda () (lambda () #f))))
@@ -60,9 +59,9 @@
              (delta (- time *last-render-time*)))
         (update delta)
         (scene:update-scenes)
-        (scene:activate-camera (ui-camera))
+        (scene:activate-camera *ui-camera*)
         (scene:update-cameras)
-        (scene:deactivate-camera (ui-camera))
+        (scene:deactivate-camera *ui-camera*)
         (render)
         (check-error)
         (set! *last-render-time* time)
