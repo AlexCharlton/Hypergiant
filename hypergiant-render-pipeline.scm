@@ -118,9 +118,16 @@
                                    (fast-funs (symbol-append name
                                                              '-fast-render-functions))
                                    (render-pipeline (symbol-append name
-                                                                   '-render-pipeline)))
+                                                                   '-render-pipeline))
+                                   (set-base (symbol-append 'set- name '-renderable-))
+                                   (set-vao (symbol-append set-base 'vao!))
+                                   (set-n-elements (symbol-append set-base 'n-elements!))
+                                   (set-element-type (symbol-append set-base 'element-type!))
+                                   (set-mode (symbol-append set-base 'mode!))
+                                   (set-offset (symbol-append set-base 'offset!)))
                               (list name render make-renderable fast-funs
-                                    render-pipeline))
+                                    set-vao set-n-elements set-element-type
+                                    set-mode set-offset render-pipeline))
                             (loop (cdr pipelines)))))))))))
 
 (define (add-node parent pipeline . args)
