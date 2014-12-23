@@ -2,7 +2,8 @@
         stop
         get-window-size
         ui
-        resize-hooks)
+        resize-hooks
+        frame-rate)
 
 (define *last-render-time* 0)
 (define ui #f)
@@ -11,7 +12,7 @@
 (define (render)
     (%swap-buffers (%window))
     (gl:clear (bitwise-ior gl:+color-buffer-bit+ gl:+depth-buffer-bit+))
-    (scene:activate-camera *ui-camera*)
+    (scene:activate-camera *ui-camera*) ; always draw UI last
     (scene:render-cameras)
     (scene:deactivate-camera *ui-camera*))
 
@@ -65,6 +66,7 @@
     (let loop ()
       (let* ((time (%get-time))
              (delta (- time *last-render-time*)))
+        (add-frame-time time)
         (update delta)
         (scene:update-scenes)
         (scene:activate-camera *ui-camera*)
@@ -94,3 +96,25 @@
 
 (define (get-window-size)
   (%get-window-size (%window)))
+
+;; Frame rate calculation
+;; We use a circular buffer to track subsequent frame times
+;; Frame rate is calculated averaging the total time between the most recent frame and oldest frame
+(define n-frames-1 20) ; number of frame times we keep, minus one, because that's more useful
+(define frame-times (make-list (add1 n-frames-1) 0)) ; circular buffer 
+(define frame-times-counter 0) ; where are we in the frame-times list?
+
+;; Call every frame
+(define (add-frame-time time)
+  (set! frame-times-counter
+    (if (= frame-times-counter n-frames-1)
+        0
+        (add1 frame-times-counter)))
+  (set! (list-ref frame-times frame-times-counter) time))
+
+(define (frame-rate)
+  (let ((oldest-frame (list-ref frame-times frame-times-counter))
+        (newest-frame (list-ref frame-times (if (= frame-times-counter n-frames-1)
+                                               0
+                                               (add1 frame-times-counter)))))
+    (/ n-frames-1 (- oldest-frame newest-frame))))
