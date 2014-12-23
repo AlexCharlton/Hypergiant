@@ -42,10 +42,14 @@ Return the size of the window as two values: width and height.
 
 Return the time, in seconds, that has elapsed since `start` was called.
 
+    [procedure] (frame-rate)
+
+Return the current frame-rate, averaged over a number of frames.
+
 ### Input
 Input is managed by /bindings/: sets of keys and the actions that they are supposed to trigger. Different input methods use separate stacks for tracking which bindings are current. Bindings are represented as lists of `binding` records.
 
-Most standard English keyboard keys are named after a code that looks like `+key-***+`. Alpha and numeric keys are named based on their character, such as `key-a`, with special keys being named based on the following descriptors: up, down, left, right, delete, space, backspace, tab, enter, escape, slash, backslash, period, comma, apostrophe, minus, equal, semicolon, grave-accent, right-bracket, left-bracket, insert, end, home, page-down, page-up, right-super, right-alt, right-control, right-shift, left-super, left-alt, left-control, left-shift, pause, print-screen, num-lock, scroll-lock, caps-lock, last, menu, world-2, and world-1. F keys f1 through f25 are defined, as are keypad keys kp-0 through kp-9, kp-equal, kp-enter, kp-add, kp-subtract, kp-multiply, kp-divide, and kp-decimal.
+Most standard English keyboard keys are named after a code that looks like `+key-***+`. Alpha and numeric keys are named based on their character, such as `key-a` and `key-1`, with special keys being named based on the following descriptors: up, down, left, right, delete, space, backspace, tab, enter, escape, slash, backslash, period, comma, apostrophe, minus, equal, semicolon, grave-accent, right-bracket, left-bracket, insert, end, home, page-down, page-up, right-super, right-alt, right-control, right-shift, left-super, left-alt, left-control, left-shift, pause, print-screen, num-lock, scroll-lock, caps-lock, last, menu, world-2, and world-1. F keys f1 through f25 are defined, as are keypad keys kp-0 through kp-9, kp-equal, kp-enter, kp-add, kp-subtract, kp-multiply, kp-divide, and kp-decimal.
 
 Mouse buttons `+mouse-button-middle+`, `+mouse-button-right+`, `+mouse-button-left+`, `+mouse-button-last+`, and `+mouse-button-1+` through `+mouse-button-8+` are also defined.
 
