@@ -240,7 +240,7 @@ A pipeline with a 2D texture coordinate associated with each vertex, with possib
 
 **Attributes**
 
-- `position` – `#:vec3`
+- `position` – `#:vec2`
 - `tex-coord` – `#:vec2`
 
 **Uniforms**
