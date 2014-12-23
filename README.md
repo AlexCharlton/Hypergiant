@@ -177,7 +177,7 @@ Accepts arguments identical to glls’ [`define-pipeline`](http://api.call-cc.or
 
     [macro] (export-pipeline . PIPELINES)
 
-Since `define-pipeline` defines multiple objects, this macro exports everything related to each pipeline in `PIPELINES`.
+Since `define-pipeline` defines multiple objects, this macro exports everything related to each pipeline in `PIPELINES`, except for the `set-SHADER-NAME-renderable-UNIFORM!` setters. These must be exported individually.
 
 ### Pre-defined pipelines and shaders
 For convenience, Hypergiant provides a number of pipelines and shaders to cover common operations. Don’t forget the each pipeline has a `NAME-render-pipeline` counterpart that should be used with `add-node`.
