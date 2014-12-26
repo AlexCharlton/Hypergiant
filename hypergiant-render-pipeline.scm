@@ -118,16 +118,9 @@
                                    (fast-funs (symbol-append name
                                                              '-fast-render-functions))
                                    (render-pipeline (symbol-append name
-                                                                   '-render-pipeline))
-                                   (set-base (symbol-append 'set- name '-renderable-))
-                                   (set-vao (symbol-append set-base 'vao!))
-                                   (set-n-elements (symbol-append set-base 'n-elements!))
-                                   (set-element-type (symbol-append set-base 'element-type!))
-                                   (set-mode (symbol-append set-base 'mode!))
-                                   (set-offset (symbol-append set-base 'offset!)))
+                                                                   '-render-pipeline)))
                               (list name render make-renderable fast-funs
-                                    set-vao set-n-elements set-element-type
-                                    set-mode set-offset render-pipeline))
+                                    render-pipeline))
                             (loop (cdr pipelines)))))))))))
 
 (define (add-node parent pipeline . args)
@@ -140,6 +133,7 @@
          (scene:set-node-bounding-sphere! node it))
     node))
 
+;; TODO animated-sprite: arg?
 (define (add-node* parent pipeline . args)
   (define current-vars (list mvp: (scene:current-camera-model-view-projection)
                              view: (scene:current-camera-view)

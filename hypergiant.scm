@@ -12,6 +12,7 @@
 (include "math")
 (include "geometry")
 (include "shaders")
+(include "sprites")
 (include "window")
 
 (reexport (prefix opengl-glew gl:)
@@ -22,8 +23,9 @@
                   resize-cameras
                   add-node
                   set-max-lights!)
-          (except glls
-                  define-pipeline)
+          (except glls-render
+                  define-pipeline
+                  export-pipeline)
           hypergiant-render-pipeline
           gl-math
           (prefix gl-utils-core gl:)
@@ -33,7 +35,7 @@
           gl-utils-mesh
           gl-type
           noise
-          soil ; TODO: wrap?
+          soil
           (only glfw3
                 get-time
                 +press+ +release+ +repeat+
