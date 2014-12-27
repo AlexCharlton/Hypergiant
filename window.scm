@@ -50,7 +50,6 @@
   (gl:enable gl:+depth-test+)
   (gl:enable gl:+blend+)
   (gl:blend-func gl:+src-alpha+ gl:+one-minus-src-alpha+)
-  ;(gl:enable gl:+cull-face+)
   (cond-expand
     ((not gles) (gl:enable gl:+multisample+))
     (else))
