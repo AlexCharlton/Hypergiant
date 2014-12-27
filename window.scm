@@ -3,7 +3,8 @@
         get-window-size
         ui
         resize-hooks
-        frame-rate)
+        frame-rate
+        update-string-mesh!)
 
 (define *last-render-time* 0)
 (define ui #f)
@@ -118,3 +119,7 @@
                                                0
                                                (add1 frame-times-counter)))))
     (/ n-frames-1 (- oldest-frame newest-frame))))
+
+(define (update-string-mesh! mesh renderable string face)
+  (string-mesh string face mesh: mesh)
+  (glls:set-renderable-n-elements! renderable (mesh-n-indices mesh)))
