@@ -1,6 +1,7 @@
 ;;;; inspector.scm
 
 ;;;; This example illustrates the geometric primitives offered by hypergiant.
+;;;; This must be run in the examples directory
 
 ;;;; NOTE:
 ;;;; If this file is compiled, since it uses glls-render, it must also be linked with OpenGL
@@ -19,7 +20,7 @@
 (define zoom (make-parameter 0))
 (define c-roll (make-parameter 0))
 (define sphere (sphere-mesh 1 32 normals?: #t  texture-width: 1 texture-height: 1))
-(define cube (cube-mesh 1 cube-map?: #t normals?: #t))
+(define cube (cube-mesh 2 cube-map?: #t normals?: #t))
 (define sky-box (cube-mesh 50 winding: #:cw cube-map?: #t))
 (define rect (rectangle-mesh 2 2 texture-width: 1 texture-height: 1))
 (define circle (circle-mesh 1 32 texture-radius: 0.5))
@@ -33,7 +34,7 @@
 
 (define-pipeline phong-pipeline 
   ((#:vertex input: ((position #:vec3) (normal #:vec3) (tex-coord #:vec2))
-             uniform: ((mvp #:mat4) (model #:mat4) )
+             uniform: ((mvp #:mat4) (model #:mat4))
              output: ((p #:vec3) (n #:vec3) (t #:vec2)))
    (define (main) #:void
      (set! gl:position (* mvp (vec4 position 1.0)))

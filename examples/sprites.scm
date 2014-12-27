@@ -1,3 +1,19 @@
+;;;; sprites.scm
+
+;;;; This example illustrates the use of animated sprites
+;;;; This must be run in the examples directory
+
+;;;; Left and right to run, space jumps
+
+;; If /usr/share/fonts/truetype/msttcorefonts/arial.ttf is not on your system, substitute with a font that is.
+(define font "/usr/share/fonts/truetype/msttcorefonts/arial.ttf")
+
+;;;; NOTE:
+;;;; If this file is compiled, since it uses glls-render, it must also be linked with OpenGL
+;;;; E.g.:
+;;;; csc -lGL sprites.scm
+
+
 (import chicken scheme)
 (use hypergiant data-structures)
 
@@ -37,6 +53,22 @@
                 (left ,+key-left+ reverse-toggle: ,run-dir)
                 (jump ,+key-space+ press: ,jump))))
 
+
+(define frame-rate-font (make-parameter #f))
+(define frame-rate-mesh (make-parameter #f))
+(define frame-rate-node (make-parameter #f))
+(define black (make-point 0 0 0))
+
+(define (add-frame-rate)
+  (frame-rate-mesh (string-mesh "...." (frame-rate-font)))
+  (frame-rate-node
+   (add-node ui text-pipeline-render-pipeline
+             mesh: (frame-rate-mesh)
+             color: black
+             tex: (face-atlas (frame-rate-font))
+             position: (make-point 550 -10 0)
+             usage: #:stream)))
+
 (define (face-right)
   (quaternion-y-rotation 0 (node-rotation (animated-sprite-node (player))))
   (node-needs-update! (animated-sprite-node (player))))
@@ -44,6 +76,11 @@
 (define (face-left)
   (quaternion-y-rotation pi (node-rotation (animated-sprite-node (player))))
   (node-needs-update! (animated-sprite-node (player))))
+
+(define (update-frame-rate)
+  (update-string-mesh! (frame-rate-mesh) (node-data (frame-rate-node))
+                       (number->string (inexact->exact (round (frame-rate))))
+                       (frame-rate-font)))
 
 (define (update delta)
   (cond
@@ -58,7 +95,8 @@
     (if (= (run-dir) 0)
         (set-animation! (player) (alist-ref 'stand animations))
         (set-animation! (player) (alist-ref 'run animations))))
-  (update-animated-sprite! (player) delta))
+  (update-animated-sprite! (player) delta)
+  (update-frame-rate))
 
 (define (init)
   (gl:clear-color 0.6 0.8 1.0 1.0)
@@ -66,6 +104,8 @@
   (scene (make-scene))
   (camera (make-camera #:ortho #:position (scene)))
   (set-camera-position! (camera) (make-point 0 100 1))
+  (frame-rate-font (load-face font 20))
+  (add-frame-rate)
   (player-sprite (load-ogl-texture "playersheet.dds" 0 0 0))
   (gl:set-texture-properties (player-sprite) mag: gl:+nearest+)
   (player (add-new-animated-sprite (scene) player-sprite-sheet
