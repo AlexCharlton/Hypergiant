@@ -66,6 +66,8 @@
                                   initial-elements: ,indices)))))
 
 (define (make-animated-sprite node base-animation)
+  (when (eq? (animation-type base-animation) #:once)
+    (error 'add-new-animated-sprite "Only looping animations may be set as the base animation" base-animation))
   (let ((renderable (scene:node-data node)))
     (glls:set-renderable-n-elements! renderable 6)
     (glls:set-renderable-offset! renderable
