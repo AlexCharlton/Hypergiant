@@ -1,5 +1,7 @@
 # Hypergiant
-Hypergiant is a library for games and other interactive media applications. Its philosophy is that it should be easy to (efficiently) perform common operations, but it shouldn’t be hard to do otherwise. Hypergiant is therefore not a framework, and doesn’t force you into any one mode of operation. Rather it’s based on acting as a glue between other graphics libraries.
+Hypergiant is an OpenGL-based library for games and other interactive media applications. Its philosophy is that it should be easy to (efficiently) perform common operations, but it shouldn’t be hard to do otherwise. Hypergiant is therefore not a framework, and doesn’t force you into any one mode of operation. Rather it’s based on acting as a glue between other graphics libraries.
+
+The goal of Hypergiant is to make it as easy to perform simple tasks as something like LÖVE 2D or CHICKEN’s own doodle (except with Hypergiant, working in 3D is just as easy as working in 2D), while keeping the full power of OpenGL available – essentially making it possible to go from prototype to polished project with the same library.
 
 ## Installation
 This repository is a [Chicken Scheme](http://call-cc.org/) egg.
@@ -21,9 +23,28 @@ It is part of the [Chicken egg index](http://wiki.call-cc.org/chicken-projects/e
 * srfi-42
 
 ## Documentation
-Reexports: [opengl-glew](http://wiki.call-cc.org/eggref/4/opengl-glew) (prefix `gl:`), [gl-utils](http://wiki.call-cc.org/eggref/4/gl-utils) (gl-utils-core is prefiex with `gl:`, all other modules have no prefix), [gl-math](http://wiki.call-cc.org/eggref/4/gl-math), [gl-type](http://wiki.call-cc.org/eggref/4/gl-type), [noise](http://wiki.call-cc.org/eggref/4/noise), and [soil](http://wiki.call-cc.org/eggref/4/soil). [glls](http://wiki.call-cc.org/eggref/4/glls) and most of [Hyperscene](http://wiki.call-cc.org/eggref/4/hyperscene) are rexported with several enhanced functions, as noted below.
+Hypergiant is a glue library, intending to make the creation of real-time graphical applications easier. The main tasks that it supports are:
 
-Take care with using any of the functions from these libraries that aren’t exported by Hypergiant (including glfw3). This probably means that you need to know how those functions will interact with Hypergiant before you doing anything. Or it might mean that I forgot to export something ;)
+- Window opening and initialization, including a main loop
+- Hypergiant acts as a glue between Hyperscene, glls. These two libraries were designed to work well together, making it possible to render an entire application in pure C, despite using Scheme to define the bulk of (if not all of) the rendering tasks. Hypergiant removes the boiler-plate required to use these libraries together.
+- Intuitive control of input events, namely mouse and keyboard events (joystick support to come)
+- Creation of geometric primitives as well as animated sprites
+- Simple shaders to make simple visualization easy
+
+Hypergiant reexports (and uses) the following libraries:
+
+- [opengl-glew](http://wiki.call-cc.org/eggref/4/opengl-glew) (prefix `gl:`): Bindings to core-context OpenGL or OpenGL ES
+- [glls](http://wiki.call-cc.org/eggref/4/glls) (some macros modified, as noted below): Creates OpenGL Shader Language shaders in Scheme, and compiles rendering functions in C for use with the shaders
+- [Hyperscene](http://wiki.call-cc.org/eggref/4/hyperscene) (some functions modified, as noted below): Scene management with a scene-graph, cameras, frustum culling, and a lighting extension (extensible only in C)
+- [gl-utils](http://wiki.call-cc.org/eggref/4/gl-utils) (gl-utils-core is prefiex with `gl:`, all other modules have no prefix): Extends OpenGL to help make common operations easier
+- [gl-math](http://wiki.call-cc.org/eggref/4/gl-math): Provides fast matrix, quaternion, and vector manipulation functions, suitable for use with OpenGL
+- [gl-type](http://wiki.call-cc.org/eggref/4/gl-type): Loads Truetype fonts and renders them as OpenGL objects
+- [soil](http://wiki.call-cc.org/eggref/4/soil): Image loading for OpenGL
+- [noise](http://wiki.call-cc.org/eggref/4/noise): Noise functions that run on the GPU in glls shaders
+
+Because Hypergiant reexports from all of these eggs, when the import list of one of these eggs changes, Hypergiant must be reinstalled in order to reflect the change.
+
+Take care with using any of the functions from these libraries that aren’t exported by Hypergiant (including glfw3). This probably means that you need to understand how those functions will interact with Hypergiant before you use them.
 
 ### Main loop
     [procedure] (start WIDTH HEIGHT TITLE [init: INIT] [update: UPDATE] [cleanup: CLEANUP] . WINDOW-HINTS)
@@ -44,7 +65,7 @@ Return the time, in seconds, that has elapsed since `start` was called.
 
     [procedure] (frame-rate)
 
-Return the current frame-rate, averaged over a number of frames.
+Return the current frame-rate, averaged over a number of frames. If rendering the frame rate, consider using `update-string-mesh!`.
 
 ### Input
 Input is managed by /bindings/: sets of keys and the actions that they are supposed to trigger. Different input methods use separate stacks for tracking which bindings are current. Bindings are represented as lists of `binding` records.
@@ -175,7 +196,9 @@ It’s worth noting that when `add-node` is called with a mesh, no references to
     [macro] (define-pipeline PIPELINE-NAME . SHADERS)
     [macro] (define-alpha-pipeline PIPELINE-NAME . SHADERS)
 
-Accepts arguments identical to glls’ [`define-pipeline`](http://api.call-cc.org/doc/glls/define-pipeline), but additionally defines a render-pipeline object with the name `PIPELINE-NAME-render-pipeline`. This render-pipeline object should be passed to `add-node`, and contains all the functions necessary to render the pipeline’s renderables. In other words, this creates managed Hyperscene pipeline objects that you don’t need to worry about. Additional stuff is going if you evaluate (i.e. don’t compile) the program.
+Accepts arguments identical to glls’ [`define-pipeline`](http://api.call-cc.org/doc/glls/define-pipeline), but additionally defines a render-pipeline object with the name `PIPELINE-NAME-render-pipeline`. This render-pipeline object should be passed to `add-node`, and contains all the functions necessary to render the pipeline’s renderables. In other words, this creates managed Hyperscene pipeline objects that you don’t need to worry about. Additional stuff is going on if you evaluate (i.e. don’t compile) the program.
+
+The functions in the Hyperscene pipelines created by `define-pipeline` correspond to the begin render, render, and end render [“fast” functions](http://wiki.call-cc.org/eggref/4/glls#fast-render-functions) created by glls. Setting the `unique-textures?` parameter, to `#f` (for syntax), if a pipeline is known to use only one texture (for each sampler type), may improve speed.
 
 `define-alpha-pipeline` works the same, but the creates a pipeline that is potentially transparent to some degree. This additional macro is necessary since Hyperscene renders alpha objects at a different stage, in a different order from opaque objects. 
 
@@ -444,4 +467,4 @@ Bug reports and patches welcome! Bugs can be reported via GitHub or to alex.n.ch
 Alex Charlton
 
 ## License
-BSD
+BSD-2-Clause
