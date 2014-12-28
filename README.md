@@ -46,7 +46,7 @@ Because Hypergiant reexports from all of these eggs, when the import list of one
 
 Take care with using any of the functions from these libraries that aren’t exported by Hypergiant (including glfw3). This probably means that you need to understand how those functions will interact with Hypergiant before you use them.
 
-### Main loop
+### Main loop and window
     [procedure] (start WIDTH HEIGHT TITLE [init: INIT] [update: UPDATE] [cleanup: CLEANUP] . WINDOW-HINTS)
 
 Start the main body of the program, creating a new window with dimensions `WIDTH` and `HEIGHT`, and the title `TITLE`. `INIT` may be a function of zero arguments that will be called during the initialization sequence, after all libraries are initialized, but before the main loop. `UPDATE` may be a function of one argument (`delta`: the time that passed between the current update and the last one) that is called once per frame before the scene(s) is updated and rendered. `CLEANUP` may be a function of zero arguments which is called before the window is closed. `WINDOW-HINTS` accepts the same keyword arguments as [`make-window`](http://api.call-cc.org/doc/glfw3/make-window).
@@ -66,6 +66,14 @@ Return the time, in seconds, that has elapsed since `start` was called.
     [procedure] (frame-rate)
 
 Return the current frame-rate, averaged over a number of frames. If rendering the frame rate, consider using `update-string-mesh!`.
+
+    [procedure] (get-window-position)
+
+Returns the `(X Y)` position (as values) of the upper left corner of the window, in screen coordinates.
+
+    [procedure] (set-window-position X Y)
+
+Sets the position of the upper left corner of the window, to `(X Y)` in screen coordinates.
 
 ### Input
 Input is managed by /bindings/: sets of keys and the actions that they are supposed to trigger. Different input methods use separate stacks for tracking which bindings are current. Bindings are represented as lists of `binding` records.
