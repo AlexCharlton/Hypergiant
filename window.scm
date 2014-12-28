@@ -1,6 +1,8 @@
 (export start
         stop
         get-window-size
+        get-window-position
+        set-window-position
         ui
         resize-hooks
         frame-rate
@@ -96,6 +98,12 @@
 
 (define (get-window-size)
   (%get-window-size (%window)))
+
+(define (get-window-position)
+  (%get-window-position (%window)))
+
+(define (set-window-position x y)
+  (%set-window-position (%window) x y))
 
 ;; Frame rate calculation
 ;; We use a circular buffer to track subsequent frame times
