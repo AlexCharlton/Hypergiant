@@ -347,8 +347,56 @@ For both types of spheres, when `NORMALS?` is `#t`, normals are added to the mes
 
 Create a cylindrical mesh of `LENGTH` and `RADIUS`, with the length oriented along the Y-axis, and the centre of the bottom of the cylinder at the origin. `VERTICAL-SUBDIVISIONS` sets the number of subdivisions along the length of the mesh, while `RESOLUTION` sets the number of subdivisions along the circumference. Setting both `TEXTURE-WIDTH` and `TEXTURE-HEIGHT` causes 2 element texture coordinates to be added to the mesh, with `TEXTURE-OFFSET` representing the upper left corner of the texture, defaulting to `(0 0)`. The texture’s upper left corner is mapped to the left side of the cylinder, wrapping counter-clockwise such that the left half of the texture corresponds to the front half of the cylinder. Alternately, `TEXTURE` may be supplied, which expects a function of one argument: the index of a vertex. This texture function should return a two element list of the texture coordinate at that index. The cube mesh vertices are ordered as a rectangular array with `RESOLUTION + 1` columns and `VERTICAL-SUBDIVISIONS + 1` rows. The first row corresponds to the top of the cylinder pole, while the last corresponds to the bottom. The first column has the same position as the last. This array is wrapped counter-clockwise around the sphere, starting on the left. Likewise, `COLOR` expects a similar function that accepts one index as an argument, but should return a three element list of colour values. When `NORMALS?` is `#t`, normals are added to the mesh. `WINDING` controls the direction of the vertex winding, either counter-clockwise (`#:ccw`, the default), or clockwise (`#:cw`). `MODE` should be a valid argument to `mode->gl`,  defaulting to `#:triangles`. `TEXTURE-TYPE`, `COLOUR-TYPE`, and `INDEX-TYPE` control the in-memory type of the texture attribute, the color attribute, and the index, and should be a valid argument to `type->gl`. `TEXTURE-TYPE`, `COLOUR-TYPE` and `INDEX-TYPE` all default to `#:ushort`.
 
+### Animated sprites
+Hypergiant provides functions that handle the common needs for animated sprites. Such sprites use a sprite sheet – a texture that contains all of the frames of the animation, arranged in a grid. From this texture a `sprite-sheet` object is created, which is a mesh of rectangles and texture coordinates corresponding to the frames on the texture. Based on these sprite sheets, `animations` are created, which are essentially a list of frames, in the order that they should be played. A animation may be used with more than one sprite sheet (although, if the frames of each sprite sheet doesn’t correspond to each other, things will probably be weird).
+
+    [procedure] (make-sprite-sheet TEX-WIDTH TEX-HEIGHT FRAME-WIDTH FRAME-HEIGHT [rows: ROWS] [columns: COLUMNS] [x-offset: X-OFFSET] [y-offset: Y-OFFSET] [centered?: CENTERED?] [texture-type: TEXTURE-TYPE])
+
+Return a mesh, similar to a rectangular mesh, but with multiple rectangles with different texture coordinates. The rectangles will be sized `FRAME-WIDTH` by `FRAME-HEIGHT`. If `CENTERED?` is not `#f`, the centre of the rectangles with be at the origin, otherwise the bottom left corner will be (default is `#t`). The texture coordinates will be taken as though the rectangles were arranged in a grid over a texture of dimensions `TEX-WIDTH` by `TEX-HEIGHT`, with the number of rows and columns that can fit on these dimensions, unless `ROWS` or `COLUMNS` is specified. Offsets to the top left corner of the tiled area of the texture can be provided with `X-OFFSET` and `Y-OFFSET`. `TEXTURE-TYPE` controls the in-memory type of the texture attribute, and should be a valid argument to `type->gl`, defaulting to `#:ushort`. 
+
+The meshes returned by `make-sprite-sheet` are intended as an argument to `add-new-animated-sprite`. A single sprite sheet cannot be used with animated sprites with different textures. Consider using `mesh-copy` if you need an identical sprite sheet.
+
+    [procedure] (make-animation TYPE FRAMES FRAME-RATE)
+    [procedure] (animation? X)
+
+An animation is an opaque type that describes an animation sequence, as given in a sprite sheet. The `TYPE` may be one of `#:once` or `#:loop`, which respectively define animations that are only ever played once, or that loop. `FRAMES` is a list of integers, that define subsequent frames in the given animation, as ordered in the sprite sheet (or sheets) that is to be associated with the animation (from left to right, top to bottom). `FRAME-RATE` is the desired speed that the animation should be played at, given in seconds between frames.
+
+For a convenient way of defining multiple animations, see `make-animation-alist`.
+
+    [procedure] (make-animation-alist ANIMATIONS [frame-rate: FRAME-RATE])
+
+Takes an alist, `ANIMATIONS` of `(KEY . (TYPE FRAMES [ANIMATION-FRAME-RATE])`, where `TYPE` and `FRAMES` are as required for `make-animation`. `ANIMATION-FRAME-RATE` is an optional argument so long as the keyword argument `FRAME-RATE` is supplied. Returns an alist of `(KEY . ANIMATION)` pairs.
+
+    [procedure] (add-new-animated-sprite PARENT SPRITE-SHEET TEXTURE BASE-ANIMATION)
+    [procedure] (animated-sprite? X)
+
+Returns a new animated sprite object that has been added to the Hyperscene node `PARENT`. `SPRITE-SHEET` is a sprite sheet mesh that has been created with `make-sprite-sheet`. `TEXTURE` is the GL texture ID associated with the sprite sheet. `BASE-ANIMATION` is a (looping) animation that the sprite should use upon initialization.
+
+    [procedure] (animated-sprite-node ANIMATED-SPRITE)
+
+Return the node associated with `ANIMATED-SPRITE`.
+
+    [procedure] (set-animation! ANIMATED-SPRITE ANIMATION)
+
+Set the `ANIMATION` that the `ANIMATED-SPRITE` should be playing. `#:once` type animations are played once before the last looping animation resumes, while `#:loop` type animations will loop continuously until another `#:loop` animation is set. Setting an animation that is already set for the `ANIMATED-SPRITE` has no effect.
+
+    [procedure] (current-animation ANIMATED-SPRITE)
+
+Return the animation that the `ANIMATED-SPRITE` is currently playing.
+
+    [procedure] (update-animated-sprite! ANIMATED-SPRITE DELTA)
+
+Update the `ANIMATED-SPRITE` given the time interval `DELTA`. This should be called every frame that the `ANIMATED-SPRITE` is to be animated.
+
+### Text
+Hypergiant reexports all of [gl-type](http://wiki.call-cc.org/eggref/4/gl-type) with no modifications. The following utilities are additionally provided:
+
+    [procedure] (update-string-mesh! MESH RENDERABLE STRING FACE)
+
+Used to modify an existing string mesh, this is similar to calling [`string-mesh`](http://api.call-cc.org/doc/gl-type/string-mesh) with the `mesh:` argument, but additionally updates the `RENDERABLE` to properly display the new `STRING`. `MESH` should be a mesh that was created with `string-mesh`. When the mesh’s VAO is created, it must have a non-static usage (i.e. setting `add-node`’s `usage:` keyword). `RENDERABLE` is a renderable associated with that mesh. `FACE` is a font face created with [`load-face`](http://api.call-cc.org/doc/gl-type/load-face). The number of graphical characters (non-whitespace characters in the char-set of `FACE`) in `STRING` must be equal to or less than the number of graphical characters in the string used to create `MESH`.
+
 ### Math
-Hypergiant reexports all of [gl-math](http://wiki.call-cc.org/eggref/4/gl-math) with no modifications. The following math functions are additionally provided
+Hypergiant reexports all of [gl-math](http://wiki.call-cc.org/eggref/4/gl-math) with no modifications. The following math functions are additionally provided:
 
     [procedure] (random-normal [MEAN] [VARIANCE])
 
