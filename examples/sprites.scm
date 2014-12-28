@@ -116,7 +116,7 @@
                                    (alist-ref 'stand animations)))
   (add-node (scene) color-pipeline-render-pipeline
             mesh: ground-mesh
-            position: (make-point 0 -132 0))
+            position: (make-point 0 -130 -2))
   (add-node (scene) color-pipeline-render-pipeline
             mesh: sun-mesh
             position: (make-point -200 260 0)))
