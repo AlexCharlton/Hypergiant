@@ -1,3 +1,7 @@
+;;;; window.scm
+
+;;;; Window management for Hypergiant
+
 (export start
         stop
         get-window-size
@@ -5,8 +9,7 @@
         set-window-position
         ui
         resize-hooks
-        frame-rate
-        update-string-mesh!)
+        frame-rate)
 
 (define *last-render-time* 0)
 (define ui #f)
@@ -126,7 +129,3 @@
                                                0
                                                (add1 frame-times-counter)))))
     (/ n-frames-1 (- oldest-frame newest-frame))))
-
-(define (update-string-mesh! mesh renderable string face)
-  (string-mesh string face mesh: mesh)
-  (glls:set-renderable-n-elements! renderable (mesh-n-indices mesh)))
