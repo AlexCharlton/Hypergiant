@@ -338,8 +338,8 @@
 (define score (make-parameter #f))
 (define score-mesh (make-parameter #f))
 (define shiny-material (make-material 0.5 0.5 0.5 10))
-(define colors `((white . ,(f32vector 1 1 1))
-                 (black . ,(f32vector 0 0 0))))
+(define colors `((white . ,white)
+                 (black . ,black)))
 (define stone-radius (/ 40))
 (define stone-mesh (sphere-mesh stone-radius 16 normals?: #t))
 (m*vector-array! (3d-scaling 1 1 0.4) (mesh-vertex-data stone-mesh)
@@ -462,7 +462,7 @@
                                                     markers)))
     (add-node (scene) mesh-pipeline-render-pipeline
               mesh: (lines)
-              color: (alist-ref 'black colors)
+              color: black
               position: (make-point 0 0 0.001))))
 
 ;; Score
@@ -470,14 +470,15 @@
 
 (define (update-score)
   (let* ((s (get-score))
-         (black (string-append "Black: " (number->string (alist-ref 'black s))))
-         (white (string-append "White: " (number->string (alist-ref 'white s)))))
+         (black-score (string-append "Black: " (number->string (alist-ref 'black s))))
+         (white-score (string-append "White: " (number->string (alist-ref 'white s)))))
     (when (score)
       (delete-node (score)))
-    (score-mesh (string-mesh (string-append black "  " white) (score-font)))
+    (score-mesh (string-mesh (string-append black-score "  " white-score)
+                             (score-font)))
     (score (add-node ui text-pipeline-render-pipeline
                      tex: (face-atlas (score-font))
-                     color: (alist-ref 'black colors)
+                     color: black
                      position: (make-point 10 -10 0)
                      mesh: (score-mesh)))))
 
@@ -516,8 +517,8 @@
   (gl:clear-color 0.8 0.8 0.8 1)
   (scene (make-scene))
   (activate-extension (scene) (lighting))
-  (set-ambient-light! (scene) (make-point 0.4 0.4 0.4))
-  (let ((light (add-light (scene) (make-point 1 1 1) 100)))
+  (set-ambient-light! (scene) (make-rgb-color 0.4 0.4 0.4))
+  (let ((light (add-light (scene) (make-rgb-color 1 1 1) 100)))
     (set-node-position! light (make-point 0 0 2)))
   (camera (make-camera #:perspective #:position (scene) near: 0.001 angle: 35))
 

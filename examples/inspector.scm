@@ -170,11 +170,11 @@
   (gl:clear-color 0.9 0.9 1.0 1)
   (scene (make-scene))
   (activate-extension (scene) (lighting))
-  (set-ambient-light! (scene) (make-point 0.4 0.4 0.4))
+  (set-ambient-light! (scene) (make-rgb-color 0.4 0.4 0.4))
   (camera (make-camera #:perspective #:orbit (scene)))
   (camera-look-at! (camera) (make-point 0 0 0))
   (set-camera-zoom! (camera) 4)
-  (let ((light (add-light (scene) (make-point 1 1 1) 100)))
+  (let ((light (add-light (scene) white 100)))
     (set-node-position! light (make-point -3 1 2)))
   (dock (load-ogl-cubemap "dock/posx.jpg"
                            "dock/negx.jpg"

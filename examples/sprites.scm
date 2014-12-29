@@ -23,7 +23,6 @@
 (define frame-rate-font (make-parameter #f))
 (define frame-rate-mesh (make-parameter #f))
 (define frame-rate-node (make-parameter #f))
-(define black (make-point 0 0 0))
 
 (define player-sprite (make-parameter #f))
 (define player-sprite-sheet (make-sprite-sheet 256 256 32 32 rows: 6))
