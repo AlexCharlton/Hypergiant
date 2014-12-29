@@ -426,6 +426,30 @@ Hypergiant reexports all of [gl-type](http://wiki.call-cc.org/eggref/4/gl-type) 
 
 Used to modify an existing string mesh, this is similar to calling [`string-mesh`](http://api.call-cc.org/doc/gl-type/string-mesh) with the `mesh:` argument, but additionally updates the `RENDERABLE` to properly display the new `STRING`. `MESH` should be a mesh that was created with `string-mesh`. When the mesh’s VAO is created, it must have a non-static usage (i.e. setting `add-node`’s `usage:` keyword). `RENDERABLE` is a renderable associated with that mesh. `FACE` is a font face created with [`load-face`](http://api.call-cc.org/doc/gl-type/load-face). The number of graphical characters (non-whitespace characters in the char-set of `FACE`) in `STRING` must be equal to or less than the number of graphical characters in the string used to create `MESH`.
 
+### Colors
+Some color functions are provided for convenience. These are nothing more than f32vectors, which are useful as uniform values.
+
+    [procedure] (make-rgb-color R G B [NON-GC?])
+    [procedure] (make-rgba-color R G B A [NON-GC?])
+
+Create a three or four element f32vector with values `(R G B [A])`. If `NON-GC?` is set to `#t`, the color will be located in a non-garbage collected region of memory (so it will not be moved, although it will still be collected when non-accessible).
+
+    [procedure] (color-r COLOR)
+    [procedure] (color-g COLOR)
+    [procedure] (color-b COLOR)
+    [procedure] (color-a COLOR)
+    [procedure] (set-color-r! COLOR)
+    [procedure] (set-color-g! COLOR)
+    [procedure] (set-color-b! COLOR)
+    [procedure] (set-color-a! COLOR)
+
+Getters and setters for colors. `color-a` and `set-color-a!` can only be used with 4 element (alpha) colors.
+
+    [constant] black
+    [constant] white
+
+Two pre-defined RGB colors, with unambiguous names.
+
 ### Math
 Hypergiant reexports all of [gl-math](http://wiki.call-cc.org/eggref/4/gl-math) with no modifications. The following math functions are additionally provided:
 
