@@ -139,7 +139,7 @@
     (mouse-bindings (cdr (mouse-bindings)))))
 
 (define (mouse-click window button action mods)
-  (when (not (null? (key-bindings)))
+  (when (not (null? (mouse-bindings)))
     (let ((bindings (car (mouse-bindings))))
       (cond
        ((= action %+press+)
