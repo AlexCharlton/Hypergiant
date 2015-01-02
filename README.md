@@ -290,6 +290,7 @@ A pipeline for use with a mono-chrome alpha texture, such as a texture atlas. Th
 
 **Uniforms**
 
+- `inverse-transpose-model` – `#:mat4`
 - `camera-position` – `#:vec3`
 - `ambient` – `#:vec3`
 - `n-lights` – `#:int`
@@ -298,7 +299,9 @@ A pipeline for use with a mono-chrome alpha texture, such as a texture atlas. Th
 - `light-intensities` – `(#:array #:float N-LIGHTS)`
 - `material` – `#:vec4`
 
-Note that all of these uniforms are automatically provided by `add-node`, although they depend on Hyperscene’s lighting extension to be activated. E.g. `(activate-extension SCENE (lighting)`
+Note that all of these uniforms (except `material`) are automatically provided by `add-node`, although they depend on Hyperscene’s lighting extension to be activated. E.g. `(activate-extension SCENE (lighting)`
+
+The function `make-material` can be used to create a vector suitable for passing as the `material` uniform value.
 
 **Exports**
     (light (SURFACE-COLOR #:vec4) (POSITION #:vec3) (NORMAL #:vec3)) -> #:vec4
@@ -319,9 +322,9 @@ Here is an example of a simple pipeline using this shader:
      (set! n normal)))
   ((#:fragment input: ((n #:vec3) (p #:vec3) (t #:vec2))
                use: (phong-lighting)
-               uniform: ((camera-position #:vec3)
+               uniform: ((tex #:sampler-2d)
+                         (camera-position #:vec3)
                          (inverse-transpose-model #:mat4)
-                         (tex #:sampler-2d)
                          (ambient #:vec3)
                          (n-lights #:int)
                          (light-positions (#:array #:vec3 8))
@@ -330,8 +333,7 @@ Here is an example of a simple pipeline using this shader:
                          (material #:vec4))
                output: ((frag-color #:vec4)))
    (define (main) #:void
-     (set! frag-color (light (texture tex t) p
-                             (normalize (* (mat3 inverse-transpose-model) n)))))))
+     (set! frag-color (light (texture tex t) p n)))))
 ```
 
     [procedure] (set-max-lights! N)
