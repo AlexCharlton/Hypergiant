@@ -79,6 +79,7 @@
            (n (caddr expr)))
       `(glls:define-shader ,name
           (#:fragment uniform: ((camera-position #:vec3)
+                                (inverse-transpose-model #:mat4)
                                 (ambient #:vec3)
                                 (n-lights #:int)
                                 (light-positions (#:array #:vec3 ,n))
@@ -89,6 +90,8 @@
           (define gamma #:vec3 (vec3 (/ 1 2.2)))
           (define (light (surface-color #:vec4) (position #:vec3) (normal #:vec3))
                 #:vec4
+            (set! normal (* (mat3 inverse-transpose-model)
+                            (normalize normal)))
             (let ((linear-color #:vec3 (* ambient surface-color.rgb)))
               (do-times (i n-lights)
                 (let* ((light-position #:vec3 (array-ref light-positions i))
