@@ -424,9 +424,9 @@ Update the `ANIMATED-SPRITE` given the time interval `DELTA`. This should be cal
 ### Text
 Hypergiant reexports all of [gl-type](http://wiki.call-cc.org/eggref/4/gl-type) with no modifications. The following utilities are additionally provided:
 
-    [procedure] (update-string-mesh! MESH RENDERABLE STRING FACE)
+    [procedure] (update-string-mesh! MESH NODE STRING FACE)
 
-Used to modify an existing string mesh, this is similar to calling [`string-mesh`](http://api.call-cc.org/doc/gl-type/string-mesh) with the `mesh:` argument, but additionally updates the `RENDERABLE` to properly display the new `STRING`. `MESH` should be a mesh that was created with `string-mesh`. When the mesh’s VAO is created, it must have a non-static usage (i.e. setting `add-node`’s `usage:` keyword). `RENDERABLE` is a renderable associated with that mesh. `FACE` is a font face created with [`load-face`](http://api.call-cc.org/doc/gl-type/load-face). The number of graphical characters (non-whitespace characters in the char-set of `FACE`) in `STRING` must be equal to or less than the number of graphical characters in the string used to create `MESH`.
+Used to modify an existing string mesh, this is similar to calling [`string-mesh`](http://api.call-cc.org/doc/gl-type/string-mesh) with the `mesh:` argument, but additionally updates the `NODE`’s renderable to properly display the new `STRING`. `MESH` should be a mesh that was created with `string-mesh`. When the mesh’s VAO is created, it must have a non-static usage (i.e. setting `add-node`’s `usage:` keyword). `NODE` is a node associated with that mesh, which must have been created with a render-pipeline. `FACE` is a font face created with [`load-face`](http://api.call-cc.org/doc/gl-type/load-face). The number of graphical characters (non-whitespace characters in the char-set of `FACE`) in `STRING` must be equal to or less than the number of graphical characters in the string used to create `MESH`.
 
 ### Colors
 Some color functions are provided for convenience. These are nothing more than f32vectors, which are useful as uniform values.
