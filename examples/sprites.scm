@@ -85,9 +85,10 @@
              usage: #:stream)))
 
 (define (update-frame-rate)
-  (update-string-mesh! (frame-rate-mesh) (node-data (frame-rate-node))
-                       (number->string (inexact->exact (round (frame-rate))))
-                       (frame-rate-font)))
+  (let ((fr (number->string (inexact->exact (round (frame-rate))))))
+    (update-string-mesh! (frame-rate-mesh) (frame-rate-node)
+                         fr
+                         (frame-rate-font))))
 
 (define (update delta)
   (update-player-state)
