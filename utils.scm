@@ -9,9 +9,10 @@
         color-r-set! color-g-set! color-b-set! color-a-set!
         black white)
 
-(define (update-string-mesh! mesh renderable string face)
+(define (update-string-mesh! mesh node string face)
   (string-mesh string face mesh: mesh)
-  (glls:set-renderable-n-elements! renderable (mesh-n-indices mesh)))
+  (glls:set-renderable-n-elements! (scene:node-data node)
+                                   (mesh-n-indices mesh)))
 
 ;;; Colors
 (define (make-rgb-color r g b #!optional non-gc?)
