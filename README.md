@@ -3,6 +3,8 @@ Hypergiant is an OpenGL-based library for games and other interactive media appl
 
 The goal of Hypergiant is to make it as easy to perform simple tasks as something like LÖVE 2D or CHICKEN’s own doodle (except with Hypergiant, working in 3D is just as easy as working in 2D), while keeping the full power of OpenGL available – essentially making it possible to go from prototype to polished project with the same library.
 
+Hypergiant should run on anything that supports OpenGL (including ES). It’s been tested on Linux, OS X, Windows.
+
 ## Installation
 This repository is a [Chicken Scheme](http://call-cc.org/) egg.
 
@@ -165,6 +167,8 @@ A parameter that must be set to a two argument function, which is called when th
 ### Scenes
 Hypergiant reexports most of [Hyperscene](http://wiki.call-cc.org/eggref/4/hyperscene) except for `init`, `add-pipeline` `delete-pipeline`, and `resize-cameras`, as it manages this functionality. `init` and `resize-cameras` are handled by `start` while `add/delete-pipeline` are handled by Hypergiant’s `define-pipline`. `add-node` is modified as described below.
 
+Cameras are automatically resized in Hypergiant so that their projection matrix matches the bounds of the window.
+
     [constant] ui
 
 A Hyperscene scene that has one orthographic camera, included for UI elements. The camera is always sized to the window and positioned such that its upper left corner is `(0 0)`. The UI scene’s camera is always rendered last.
@@ -179,7 +183,7 @@ This extension of the Hyperscene function of the same name (along with Hypergian
 
 `POSITION` expects a gl-math point. When `POSITION` is provided, `set-node-position!` is called with `POSITION` after the node is created. `RADIUS` expects a float. When `RADIUS` is provided, `set-node-bounding-sphere!` is called with `RADIUS` after the node is created.
 
-When `PIPELINE` is a render-pipeline the node data that is created is a glls [renderable](http://wiki.call-cc.org/eggref/4/glls#renderables) object. `MESH`, `VAO`, `MODE`, `N-ELEMENTS`, `ELEMENT-TYPE`, and `OFFSET` all function as they do when making a renderable. Additionally, `MESH` may be passed to `add-node` when its VAO has not yet been created (i.e. with [`mesh-make-vao`](http://api.call-cc.org/doc/gl-utils/mesh-make-vao%21)), and `mesh-make-vao!` will be called automatically, influenced by the optional `USAGE` keyword (defaulting to `+static`). `DRAW-ARRAYS?` is a boolean that indicates whether or not the renderable’s array rendering function should be used (i.e. `draw-arrays` is used instead of `draw-elements`). `DRAW-ARRAYS?` defaults to `#t` if `MESH` has no index data, and `#f` otherwise. `add-node` accepts other keyword `ARGS`, which are used to set the value for each uniform in the pipeline, as required by glls renderable makers.
+When `PIPELINE` is a render-pipeline the node data that is created is a glls [renderable](http://wiki.call-cc.org/eggref/4/glls#renderables) object. `MESH`, `VAO`, `MODE`, `N-ELEMENTS`, `ELEMENT-TYPE`, and `OFFSET` all function as they do when making a renderable. Additionally, `MESH` may be passed to `add-node` when its VAO has not yet been created (i.e. with [`mesh-make-vao`](http://api.call-cc.org/doc/gl-utils/mesh-make-vao%21)), and `mesh-make-vao!` will be called automatically, influenced by the optional `USAGE` keyword (defaulting to `#:static`). `DRAW-ARRAYS?` is a boolean that indicates whether or not the renderable’s array rendering function should be used (i.e. `draw-arrays` is used instead of `draw-elements`). `DRAW-ARRAYS?` defaults to `#t` if `MESH` has no index data, and `#f` otherwise. `add-node` accepts other keyword `ARGS`, which are used to set the value for each uniform in the pipeline, as required by glls renderable makers.
 
 `add-node` appends a number of Hyperscene values to its renderable creation call, for convenience. Each variable is combined with the following keys (which may correspond to the names of uniforms in the renderable’s pipeline):
 
