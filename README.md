@@ -178,9 +178,15 @@ A Hyperscene scene that has one orthographic camera, included for UI elements. T
 
 A parameter that contains a list of functions of two arguments, width and height, that are called every time the window is resized.
 
-    [procedure] (add-node PARENT PIPELINE [mesh: MESH] [vao: VAO] [mode: MODE] [n-elements: N-ELEMENTS] [element-type: ELEMENT-TYPE] [offset: OFFSET] [usage: USAGE] [draw-arrays?: DRAW-ARRAYS?] [position: POSITION] [radius: RADIUS] . ARGS)
+    [procedure] (add-light PARENT COLOR INTENSITY [direction: direction] [spot-angle: SPOT-ANGLE] [position: POSITION] [radius: RADIUS])
 
-This extension of the Hyperscene function of the same name (along with Hypergiant’s extension of `define-pipline`) is where the majority of the magic of Hypergiant happens. Unlike its cousin, Hypergiant’s `add-node`’s `PIPELINE` argument accepts the special *render-pipeline* object defined by Hypergiant’s `define-pipeline` rather than a Hyperscene pipeline.  Because of this, Hyperscene pipelines never need to be manually created. When a non-render-pipeline (i.e. a Hyperscene pipeline) is passed to `add-node`, it acts identically to the Hyperscene version, except with the addition of the `POSITION` and `RADIUS` keywords.
+As in Hyperscene, adds a new light to the given `PARENT` node (or scene) with `#f32(r g b)` `COLOR`. `INTENSITY` is the floating point value associated with the brightness of the light. `DIRECTION` is an `#f32(x y z)` vector that indicates the direction that the light is pointing, defaulting to `#f32(0 0 0)`. `SPOT-ANGLE` indicates the angle in radians that the light is spread over (defaulting to `0`, representing a non-spotlight source). A node is returned that can be moved, rotated, and sized like any other node.
+
+This function is extended with `POSITION`, which sets the initial position of the light, and `RADIUS`, which sets the radius of the light’s bounding sphere.
+
+    [procedure] (add-node PARENT PIPELINE [mesh: MESH] [vao: VAO] [mode: MODE] [n-elements: N-ELEMENTS] [element-type: ELEMENT-TYPE] [offset: OFFSET] [usage: USAGE] [draw-arrays?: DRAW-ARRAYS?] [position: POSITION] [radius: RADIUS] [data: DATA] [delete: DELETE] . ARGS)
+
+This extension of the Hyperscene function of the same name (along with Hypergiant’s extension of `define-pipline`) is where the majority of the magic of Hypergiant happens. Unlike its cousin, Hypergiant’s `add-node`’s `PIPELINE` argument accepts the special *render-pipeline* object defined by Hypergiant’s `define-pipeline` rather than a Hyperscene pipeline.  Because of this, Hyperscene pipelines never need to be manually created. When a non-render-pipeline (i.e. a Hyperscene pipeline) is passed to `add-node`, it acts identically to the Hyperscene version, except with the addition of the `POSITION` and `RADIUS` keywords, and `DATA` and `DELETE` are keyword arguments.
 
 `POSITION` expects a gl-math point. When `POSITION` is provided, `set-node-position!` is called with `POSITION` after the node is created. `RADIUS` expects a float. When `RADIUS` is provided, `set-node-bounding-sphere!` is called with `RADIUS` after the node is created.
 
@@ -297,14 +303,14 @@ A pipeline for use with a single channel alpha texture, such as a texture atlas.
 
 **Uniforms**
 
-- `inverse-transpose-model` – `#:mat4`
-- `camera-position` – `#:vec3`
-- `ambient` – `#:vec3`
-- `n-lights` – `#:int`
-- `light-positions` – `(#:array #:vec3 N-LIGHTS)`
-- `light-colors` – `(#:array #:vec3 N-LIGHTS)`
-- `light-intensities` – `(#:array #:float N-LIGHTS)`
-- `material` – `#:vec4`
+    ((inverse-transpose-model #:mat4)
+     (camera-position #:vec3)
+     (ambient #:vec3)
+     (n-lights #:int)
+     (light-positions (#:array #:vec3 N-LIGHTS))
+     (light-colors (#:array #:vec3 N-LIGHTS))
+     (light-intensities (#:array #:float N-LIGHTS))
+     (material #:vec4))
 
 Note that all of these uniforms (except `material`) are automatically provided by `add-node`, although they depend on Hyperscene’s lighting extension to be activated. E.g. `(activate-extension SCENE (lighting)`
 
