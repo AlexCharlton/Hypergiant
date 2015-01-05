@@ -19,8 +19,6 @@
 (reexport (prefix opengl-glew gl:)
           (except hyperscene
                   init
-                  add-pipeline
-                  delete-pipeline
                   resize-cameras
                   add-node
                   set-max-lights!)
