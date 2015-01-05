@@ -174,8 +174,8 @@
   (camera (make-camera #:perspective #:orbit (scene)))
   (camera-look-at! (camera) (make-point 0 0 0))
   (set-camera-zoom! (camera) 4)
-  (let ((light (add-light (scene) white 100)))
-    (set-node-position! light (make-point -3 1 2)))
+  (add-light (scene) white 100
+             position: (make-point -3 1 2))
   (dock (load-ogl-cubemap "dock/posx.jpg"
                            "dock/negx.jpg"
                            "dock/posy.jpg"
