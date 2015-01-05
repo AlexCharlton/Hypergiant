@@ -126,7 +126,10 @@
 (define (add-node parent pipeline . args)
   (let ((node (if (render-pipeline? pipeline)
                  (apply add-node* parent pipeline args)
-                 (apply scene:add-node parent pipeline args))))
+                 (apply scene:add-node parent
+                        (get-keyword data: args)
+                        pipeline
+                        (get-keyword delete: args)))))
     (if* (get-keyword position: args)
          (scene:set-node-position! node it))
     (if* (get-keyword radius: args)
