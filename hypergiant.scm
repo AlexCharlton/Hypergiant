@@ -21,6 +21,7 @@
                   init
                   resize-cameras
                   add-node
+                  add-light
                   set-max-lights!)
           (except glls-render
                   define-pipeline

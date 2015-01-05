@@ -7,7 +7,8 @@
         make-rgba-color
         color-r color-g color-b color-a
         color-r-set! color-g-set! color-b-set! color-a-set!
-        black white)
+        black white
+        add-light)
 
 (define (update-string-mesh! mesh node string face)
   (string-mesh string face mesh: mesh)
@@ -56,3 +57,12 @@
 
 (define black (make-rgb-color 0 0 0 #t))
 (define white (make-rgb-color 1 1 1 #t))
+
+;;; Hyperscene
+(define (add-light node color intensity . args)
+  (let ((light (apply scene:add-light node color intensity args)))
+    (if* (get-keyword position: args)
+         (scene:set-node-position! light it))
+    (if* (get-keyword radius: args)
+         (scene:set-node-bounding-sphere! light it))
+    light))
