@@ -8,12 +8,6 @@
 ;; If /usr/share/fonts/truetype/msttcorefonts/arial.ttf is not on your system, substitute with a font that is.
 (define font "/usr/share/fonts/truetype/msttcorefonts/arial.ttf")
 
-;;;; NOTE:
-;;;; If this file is compiled, since it uses glls-render, it must also be linked with OpenGL
-;;;; E.g.:
-;;;; csc -lGL sprites.scm
-
-
 (import chicken scheme)
 (use hypergiant data-structures)
 
