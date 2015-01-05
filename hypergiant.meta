@@ -4,6 +4,6 @@
  (author "Alex Charlton")
  (category graphics)
  (license "BSD-2-Clause")
- (depends glfw3 glls opengl-glew gl-math gl-utils gl-type hyperscene noise soil
-          random-mtzig miscmacros srfi-42)
+ (depends  glfw3 glls opengl-glew gl-math gl-utils gl-type hyperscene
+           noise soil random-mtzig miscmacros srfi-42 srfi-99)
  (test-depends test))
