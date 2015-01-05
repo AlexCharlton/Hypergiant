@@ -5,6 +5,8 @@ The goal of Hypergiant is to make it as easy to perform simple tasks as somethin
 
 Hypergiant should run on anything that supports OpenGL (including ES). It’s been tested on Linux, OS X, Windows.
 
+Note that this is an early release of Hypergiant. Some features that you might expect are missing, but there is more to come. Feel free to pass feature requests my way, though. Or better yet: patches!
+
 ## Installation
 This repository is a [Chicken Scheme](http://call-cc.org/) egg.
 
