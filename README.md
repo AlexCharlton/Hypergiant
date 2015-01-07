@@ -27,6 +27,8 @@ It is part of the [Chicken egg index](http://wiki.call-cc.org/chicken-projects/e
 * srfi-42
 * srfi-99
 
+While Hypergiant doesn’t require any external libraries directly, opengl-glew and glfw3 depend on OpenGL, [GLEW](http://glew.sourceforge.net/), [GLFW](http://www.glfw.org/) (the most recent major version is required: 3.X).
+
 ## Documentation
 Hypergiant is a largely a glue library, intending to make the creation of real-time graphical applications easier. The main tasks that it supports are:
 
