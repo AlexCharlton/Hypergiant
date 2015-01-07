@@ -3,7 +3,7 @@ Hypergiant is an OpenGL-based library for games and other interactive media appl
 
 The goal of Hypergiant is to make it as easy to perform simple tasks as something like LÖVE 2D or CHICKEN’s own doodle (except with Hypergiant, working in 3D is just as easy as working in 2D), while keeping the full power of OpenGL available – essentially making it possible to go from prototype to polished project with the same library.
 
-Hypergiant should run on anything that supports OpenGL (including ES). It’s been tested on Linux, OS X, Windows.
+Hypergiant should run on anything that supports OpenGL (including ES).
 
 Note that this is an early release of Hypergiant. Some features that you might expect are missing, but there is more to come. Feel free to pass feature requests my way, though. Or better yet: patches!
 
