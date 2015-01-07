@@ -1,5 +1,10 @@
 ;; hypergiant.setup -*- scheme -*-
 
+(define gl-client
+  (cond-expand
+    ((or arm gles) "-Dgles")
+    (else "")))
+
 (define compile-options "-d2 -O3")
 
 (define link-options
@@ -11,7 +16,7 @@
 
 (compile ,compile-options -J -s hypergiant-render-pipeline.scm)
 (compile ,compile-options -s hypergiant-render-pipeline.import.scm)
-(compile ,compile-options ,link-options -J -s hypergiant.scm)
+(compile ,compile-options ,link-options ,gl-client -J -s hypergiant.scm)
 (compile ,compile-options -s hypergiant.import.scm)
 
 (install-extension
