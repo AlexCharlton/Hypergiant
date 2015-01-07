@@ -5,8 +5,10 @@
 
 ;;;; Left and right to run, space jumps
 
-;; If /usr/share/fonts/truetype/msttcorefonts/arial.ttf is not on your system, substitute with a font that is.
-(define font "/usr/share/fonts/truetype/msttcorefonts/arial.ttf")
+;; If these font paths are not on your system, substitute with a font that is.
+(define font (cond-expand
+	      (macosx "/Library/Fonts/Microsoft/Arial.ttf")
+	      (else "/usr/share/fonts/truetype/msttcorefonts/arial.ttf")))
 
 (import chicken scheme)
 (use hypergiant data-structures)
