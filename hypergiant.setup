@@ -2,9 +2,16 @@
 
 (define compile-options "-d2 -O3")
 
+(define link-options
+  (cond-expand
+    (macosx "-framework OpenGL")
+    (windows "-lopengl32")
+    ((or gles arm) "-lGLESv2")
+    (else "-lGL")))
+
 (compile ,compile-options -J -s hypergiant-render-pipeline.scm)
 (compile ,compile-options -s hypergiant-render-pipeline.import.scm)
-(compile ,compile-options -J -s hypergiant.scm)
+(compile ,compile-options ,link-options -J -s hypergiant.scm)
 (compile ,compile-options -s hypergiant.import.scm)
 
 (install-extension
