@@ -53,6 +53,21 @@ Because Hypergiant reexports from all of these eggs, when the import list of one
 
 Take care with using any of the functions from these libraries that aren’t exported by Hypergiant (including glfw3). This probably means that you need to understand how those functions will interact with Hypergiant before you use them.
 
+
+### Running Hypergiant applications
+Hypergiant is designed to work either compiled or interpreted.
+
+When interpreted with `csi`, Hypergiant frees up the REPL so that commands can still be entered, allowing for live-coding. This is reported to not work when the readline egg is active, although it works fine with parley.
+
+When compiling Hypergiant, `csc FILE.scm` is usually sufficient, *unless* a pipeline has been defined (with `define-pipeline`). In this case, linking to OpenGL is needed:
+
+- On Linux: `csc -lGL FILE.scm`
+- On OS X: `csc -framework OpenGL FILE.scm`
+- On Windows: `csc -lopengl32 FILE.scm`
+
+Hypergiant is designed to work by default with OpenGL 3.3 and GLSL version 330 (and version 2 and 120, respectively for OpenGL ES). This is a relatively old standard, and even older hardware should have drivers available that support this. You can still use any versions you want by passing context-version arguments to `start`, although the pre-defined pipelines and shaders are stuck at their current versions for now. If you have any issues with this, let me know and we can try to work something out.
+
+
 ### Main loop and window
     [procedure] (start WIDTH HEIGHT TITLE [init: INIT] [update: UPDATE] [cleanup: CLEANUP] . WINDOW-HINTS)
 
