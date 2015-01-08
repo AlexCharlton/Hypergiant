@@ -80,8 +80,6 @@
         (render)
         (check-error)
         (set! *last-render-time* time)
-        (when (feature? csi:)
-          (thread-yield!))
         (%poll-events))
       (unless (%window-should-close? (%window))
         (loop))))
@@ -92,9 +90,7 @@
 
 (define (start width height title . args)
   (define start** (lambda () (apply start* width height title args)))
-  (if (feature? csi:)
-      (thread-start! start**)
-      (start**)))
+  (start**))
 
 (define (stop)
   (%set-window-should-close (%window) #t))
