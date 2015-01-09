@@ -9,7 +9,9 @@
         set-window-position
         ui
         resize-hooks
-        frame-rate)
+        frame-rate
+        get-clipboard-string
+        set-clipboard-string)
 
 (define *last-render-time* 0)
 (define ui #f)
@@ -111,6 +113,12 @@
 
 (define (set-window-position x y)
   (%set-window-position (%window) x y))
+
+(define (get-clipboard-string)
+  (%get-clipboard-string (%window)))
+
+(define (set-clipboard-string string)
+  (%set-clipboard-string (%window) string))
 
 ;; Frame rate calculation
 ;; We use a circular buffer to track subsequent frame times
