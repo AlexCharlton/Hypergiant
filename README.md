@@ -97,6 +97,15 @@ Returns the `(X Y)` position (as values) of the upper left corner of the window,
 
 Sets the position of the upper left corner of the window, to `(X Y)` in screen coordinates.
 
+    [procedure] (get-clipboard-string)
+
+Returns the contents of the clipboard.
+
+    [procedure] (set-clipboard-string STRING)
+
+Sets the contents of the clipboard to `STRING`.
+
+
 ### Input
 Input is managed by *bindings*: sets of keys and the actions that they are supposed to trigger. Different input methods use separate stacks for tracking which bindings are current. Bindings are represented as lists of `binding` records.
 
