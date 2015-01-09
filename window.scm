@@ -16,11 +16,12 @@
 (define *ui-camera* #f)
 
 (define (render)
-    (%swap-buffers (%window))
     (gl:clear (bitwise-ior gl:+color-buffer-bit+ gl:+depth-buffer-bit+))
     (scene:activate-camera *ui-camera*) ; always draw UI last
     (scene:render-cameras)
-    (scene:deactivate-camera *ui-camera*))
+    (scene:deactivate-camera *ui-camera*)
+    (%swap-buffers (%window))
+)
 
 (define (move-ui-camera w h)
   (scene:set-camera-position! *ui-camera*
