@@ -66,6 +66,7 @@
   (set! *ui-camera* (scene:make-camera #:ortho #:position ui))
   (scene:deactivate-camera *ui-camera*)
   (resize #f width height)
+  (gl:get-error) ;; silence error caused by GLEW
   (glls:compile-pipelines)
   ((get-keyword init: args (lambda () (lambda () #f))))
   (gc)
