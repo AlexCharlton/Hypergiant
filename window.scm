@@ -38,15 +38,17 @@
   (scene:init (lambda () (%get-window-size (%window))))
   (%window-size-callback resize)
   (%mouse-button-callback mouse-click)
-  (cond-expand
-    (macosx (apply %make-window width height title
-                   samples: 2
-                   context-version-major: 3
-                   context-version-minor: 2
-                   opengl-forward-compat: #t
-                   opengl-profile: %+opengl-core-profile+
-                   args))
-    (else (apply %make-window width height title samples: 2 args)))
+  (apply %make-window width height title
+         (append (cond-expand
+                   (macosx (list samples: 2
+                                 context-version-major: 3
+                                 context-version-minor: 2
+                                 opengl-forward-compat: #t
+                                 opengl-profile: %+opengl-core-profile+))
+                   (gles '())
+                   (else (list context-version-major: 3
+                               context-version-minor: 3)))
+                 args))
   (%%set-cursor-pos-callback (%window) #$hpgCursorPositionCallback)
   (%%set-scroll-callback (%window) #$hpgScrollCallback)
   (%%set-key-callback (%window) #$hpgKeyCallback)
