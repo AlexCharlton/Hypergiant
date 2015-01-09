@@ -5,7 +5,10 @@
     ((or arm gles) "-Dgles")
     (else "")))
 
-(define compile-options "-d2 -O3")
+(define compile-options
+  (cond-expand
+    (debug "-d2 -O3")
+    (else "-d0 -O3")))
 
 (define link-options
   (cond-expand
