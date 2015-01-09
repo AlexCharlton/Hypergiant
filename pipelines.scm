@@ -46,7 +46,7 @@
    (define (main) #:void
      (set! frag-color (texture tex tex-c)))))
 
-(define-pipeline text-pipeline
+(define-alpha-pipeline text-pipeline
   ((#:vertex input: ((position #:vec2) (tex-coord #:vec2))
              uniform: ((mvp #:mat4))
              output: ((tex-c #:vec2))) 
