@@ -162,7 +162,7 @@
                 (cube ,+key-3+ press: ,add-cube)
                 (cylinder ,+key-4+ press: ,add-cylinder)
                 (rect ,+key-5+ press: ,add-rect)
-                (rect ,+key-6+ press: ,add-circle))))
+                (circle ,+key-6+ press: ,add-circle))))
 
 (define (init)
   (gl:enable gl:+texture-cube-map-seamless+)
