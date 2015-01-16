@@ -4,7 +4,7 @@
 (use (prefix glfw3 %) (prefix glfw3-bindings %%) (prefix glls-render glls:)
      (prefix opengl-glew gl:) gl-math
      gl-utils (prefix hyperscene scene:) gl-type
-     srfi-1 srfi-18 srfi-42 srfi-99 data-structures
+     srfi-1 srfi-4 srfi-18 srfi-42 srfi-99 data-structures
      random-mtzig miscmacros noise soil
      hypergiant-render-pipeline)
 
@@ -30,7 +30,6 @@
           gl-math
           (prefix gl-utils-core gl:)
           gl-utils-ply
-          gl-utils-srfi-4
           gl-utils-bytevector
           gl-utils-mesh
           gl-type
