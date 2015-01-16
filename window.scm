@@ -22,8 +22,7 @@
     (scene:activate-camera *ui-camera*) ; always draw UI last
     (scene:render-cameras)
     (scene:deactivate-camera *ui-camera*)
-    (%swap-buffers (%window))
-)
+    (%swap-buffers (%window)))
 
 (define (move-ui-camera w h)
   (scene:set-camera-position! *ui-camera*
