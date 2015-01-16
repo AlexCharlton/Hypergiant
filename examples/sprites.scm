@@ -39,12 +39,13 @@
                               color: (lambda (_) (list 0.9 0.9 0.3))))
 
 (define jump-velocity (make-parameter #f))
-(define jump-height 20)
+(define jump-height 12)
+(define jump-accel 60)
 (define run-dir (make-parameter 0))
 
 (define (jump)
   (unless (jump-velocity)
-    (jump-velocity jump-height)
+    (jump-velocity (* jump-height jump-accel))
     (set-animation! (player) (alist-ref 'fall animations))
     (set-animation! (player) (alist-ref 'jump animations))))
 
@@ -56,15 +57,18 @@
   (quaternion-y-rotation pi (node-rotation (animated-sprite-node (player))))
   (node-needs-update! (animated-sprite-node (player))))
 
-(define (update-player-state)
+(define (update-player-state delta)
   (cond
    ((positive? (run-dir)) (face-right))
    ((negative? (run-dir)) (face-left)))
   (when (jump-velocity)
-    (move-node! (animated-sprite-node (player)) (make-point 0 (jump-velocity) 0))
-    (if (= (jump-velocity) (- jump-height))
-        (jump-velocity #f)
-        (jump-velocity (sub1 (jump-velocity)))))
+    (move-node! (animated-sprite-node (player))
+                (make-point 0 (* (jump-velocity) delta) 0))
+    (if (= (jump-velocity) (- (* jump-height jump-accel)))
+        (begin (jump-velocity #f)
+               (set-node-position! (animated-sprite-node (player))
+                                   (make-point 0 0 0)))
+        (jump-velocity (- (jump-velocity) jump-accel))))
   (unless (jump-velocity)
     (if (= (run-dir) 0)
         (set-animation! (player) (alist-ref 'stand animations))
@@ -87,7 +91,7 @@
                          (frame-rate-font))))
 
 (define (update delta)
-  (update-player-state)
+  (update-player-state delta)
   (update-animated-sprite! (player) delta)
   (update-frame-rate))
 
