@@ -51,7 +51,9 @@ Hypergiant reexports (and uses) the following libraries:
 - [soil](http://wiki.call-cc.org/eggref/4/soil): Image loading for OpenGL
 - [noise](http://wiki.call-cc.org/eggref/4/noise): Noise functions that run on the GPU, created as glls shaders
 
-Because Hypergiant reexports from all of these eggs, when the import list of one of these eggs changes, Hypergiant must be reinstalled in order to reflect the change.
+Because Hypergiant reexports from all of these eggs, when the import list of one of these eggs changes, Hypergiant must be reinstalled in order to reflect the change. You can use the following command to ensure that a full update is performed:
+
+    chicken-install opengl-glew glfw3 gl-utils gl-math glls hyperscene gl-type soil noise hypergiant
 
 Take care with using any of the functions from these libraries that aren’t exported by Hypergiant (including glfw3). This probably means that you need to understand how those functions will interact with Hypergiant before you use them.
 
