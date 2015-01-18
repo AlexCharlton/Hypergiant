@@ -13,8 +13,7 @@
  (for-emitter emitter-mesh mesh-update* %update-emitter %emitter-reset
               %emitter-next-particle particle-getter particle-setter
               get-vertex-attribute type->make-vector type->pointer
-              emitter-emitter)
- bind-mesh-accessors)
+              emitter-emitter))
 
 ;;; Bindings
 (foreign-declare "#include \"particles.h\"")
