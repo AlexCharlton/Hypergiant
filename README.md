@@ -38,6 +38,7 @@ Hypergiant is a largely a glue library, intending to make the creation of real-t
 - Hypergiant acts as a glue between Hyperscene and glls. These two libraries were designed to work well together, making it possible to render an entire application in pure C, despite using Scheme to define the bulk of (if not all of) the rendering tasks. Hypergiant removes the boiler-plate required to use these libraries together.
 - Intuitive control of input events, namely mouse and keyboard events (joystick support to come)
 - Creation of geometric primitives as well as animated sprites
+- A particle system
 - Simple shaders to make simple visualization easy
 
 Hypergiant reexports (and uses) the following libraries:
@@ -216,13 +217,13 @@ As in Hyperscene, adds a new light to the given `PARENT` node (or scene) with `#
 
 This function is extended with `POSITION`, which sets the initial position of the light, and `RADIUS`, which sets the radius of the light’s bounding sphere.
 
-    [procedure] (add-node PARENT PIPELINE [mesh: MESH] [vao: VAO] [mode: MODE] [n-elements: N-ELEMENTS] [element-type: ELEMENT-TYPE] [offset: OFFSET] [usage: USAGE] [draw-arrays?: DRAW-ARRAYS?] [position: POSITION] [radius: RADIUS] [data: DATA] [delete: DELETE] . ARGS)
+    [procedure] (add-node PARENT PIPELINE [mesh: MESH] [vao: VAO] [mode: MODE] [n-elements: N-ELEMENTS] [element-type: ELEMENT-TYPE] [offset: OFFSET] [usage: USAGE] [draw-arrays?: DRAW-ARRAYS?] [position: POSITION] [radius: RADIUS] [data: DATA] [delete: DELETE] . UNIFORM-ARGS)
 
 This extension of the Hyperscene function of the same name (along with Hypergiant’s extension of `define-pipline`) is where the majority of the magic of Hypergiant happens. Unlike its cousin, Hypergiant’s `add-node`’s `PIPELINE` argument accepts the special *render-pipeline* object defined by Hypergiant’s `define-pipeline` rather than a Hyperscene pipeline.  Because of this, Hyperscene pipelines never need to be manually created. When a non-render-pipeline (i.e. a Hyperscene pipeline) is passed to `add-node`, it acts identically to the Hyperscene version, except with the addition of the `POSITION` and `RADIUS` keywords, and `DATA` and `DELETE` are keyword arguments.
 
 `POSITION` expects a gl-math point. When `POSITION` is provided, `set-node-position!` is called with `POSITION` after the node is created. `RADIUS` expects a float. When `RADIUS` is provided, `set-node-bounding-sphere!` is called with `RADIUS` after the node is created.
 
-When `PIPELINE` is a render-pipeline the node data that is created is a [glls renderable](http://wiki.call-cc.org/eggref/4/glls#renderables) object. `MESH`, `VAO`, `MODE`, `N-ELEMENTS`, `ELEMENT-TYPE`, and `OFFSET` all function as they do when making a renderable. Additionally, `MESH` may be passed to `add-node` when its VAO has not yet been created (i.e. with [`mesh-make-vao!`](http://api.call-cc.org/doc/gl-utils/mesh-make-vao%21)), and `mesh-make-vao!` will be called automatically, influenced by the optional `USAGE` keyword (defaulting to `#:static`). `DRAW-ARRAYS?` is a boolean that indicates whether or not the renderable’s array rendering function should be used (i.e. `draw-arrays` is used instead of `draw-elements`). `DRAW-ARRAYS?` defaults to `#t` if `MESH` has no index data, and `#f` otherwise. `add-node` accepts other keyword `ARGS`, which are used to set the value for each uniform in the pipeline, as required by glls renderable makers.
+When `PIPELINE` is a render-pipeline the node data that is created is a [glls renderable](http://wiki.call-cc.org/eggref/4/glls#renderables) object. `MESH`, `VAO`, `MODE`, `N-ELEMENTS`, `ELEMENT-TYPE`, and `OFFSET` all function as they do when making a renderable. Additionally, `MESH` may be passed to `add-node` when its VAO has not yet been created (i.e. with [`mesh-make-vao!`](http://api.call-cc.org/doc/gl-utils/mesh-make-vao%21)), and `mesh-make-vao!` will be called automatically, influenced by the optional `USAGE` keyword (defaulting to `#:static`). `DRAW-ARRAYS?` is a boolean that indicates whether or not the renderable’s array rendering function should be used (i.e. `draw-arrays` is used instead of `draw-elements`). `DRAW-ARRAYS?` defaults to `#t` if `MESH` has no index data, and `#f` otherwise. `add-node` accepts other keyword `UNIFORM-ARGS`, which are used to set the value for each uniform in the pipeline, as required by glls renderable makers.
 
 `add-node` appends a number of Hyperscene values to its renderable creation call, for convenience. The following keys and values are added, which must correspond to the names of uniforms in the renderable’s pipeline if they are to be used:
 
@@ -478,6 +479,69 @@ Return the animation that the `ANIMATED-SPRITE` is currently playing.
     [procedure] (update-animated-sprite! ANIMATED-SPRITE DELTA)
 
 Update the `ANIMATED-SPRITE` given the time interval `DELTA`, changing the current frame of the sprite if enough time has elapsed since the last frame. This should be called every frame that the `ANIMATED-SPRITE` is to be animated.
+
+### Particle system
+Hypergiant’s particle system is implemented as an extension to Hyperscene. It introduces two concepts: *emitters* and *particles*. Emitters are a record that is created when added to a scene (via `add-emitter`), similar to a node. These records contain a reference to the node that is used to move them around the scene. Emitters also share properties with [meshes](http://wiki.call-cc.org/eggref/4/gl-utils#gl-utils-mesh). A component of the emitter is essentially a mesh where each vertex corresponds to a particle, and the same attribute system is shared with meshes.
+
+Emitters are used to “emit” a number of particles. These particles are created and updated via the `for-emitter` macro.
+
+
+    [procedure] (particles)
+
+Returns a pointer to the Hyperscene extension of the particle system. The extension must be activated for any scenes that will use the particle system. I.e. `(activate-extension SCENE (particles))`
+
+    [record] emitter
+
+The emitter record returned by `add-emitter`.
+
+    [procedure] (emitter? X)
+
+Return `#t` if `X` is a emitter record.
+
+    [procedure] (emitter-node EMITTER)
+
+Return the node of `EMITTER` that can be used to position the emitter in its scene. Do not use `delete-node` on this node: use `delete-emitter` on the emitter instead.
+
+    [procedure] (emitter-n-particles EMITTER)
+
+Return the current number of particles created by `EMITTER`.
+    
+    [procedure] (emitter-max-particles EMITTER)
+
+Return the maximum number of particles that can be created by `EMITTER`.
+
+    [procedure] (add-emitter PARENT PIPELINE [attributes: ATTRIBUTES] [n-particles: N-PARTICLES]  [position: POSITION] [radius: RADIUS] . UNIFORM-ARGS)
+
+Add a new emitter to the node or scene `PARENT`, returning an emitter record. `PIPELINE` is the render-pipeline used to render the emitter.
+
+`ATTRIBUTES` is a list of the kind that would be passed as the `ATTRIBUTES` argument in [make-mesh](http://api.call-cc.org/doc/gl-utils/make-mesh), a list in the form:
+
+    (NAME TYPE N [normalized: NORMALIZED])
+
+where `NAME` is the attribute name (as a symbol), `TYPE` is the type of the attribute as accepted by `type->gl`, `N` is the number of elements in the attribute, `NORMALIZED` is a boolean value indicating whether the attribute’s values should be normalized (defaulting to `#f`).
+
+These attributes correspond to the properties of each particle. All emitters are given the attribute `(position #:float 3)`, so `ATTRIBUTES` is used to define any attributes beyond this default one.
+
+`N-PARTICLES` is a required argument, which defines the maximum number of particles that the emitter may create. `POSITION` is used to define the initial position of the emitter, while `RADIUS` is used to define the radius of its bounding sphere. Unlike most nodes, the radius of the bounding sphere of an emitter cannot be meaningfully changed after it is created, so make sure to properly initialize it. As with `add-node`, `UNIFORM-ARGS` is the set of other keywords used to set the value for each uniform in the pipeline, as required by the [glls renderable](http://wiki.call-cc.org/eggref/4/glls#renderables) makers, specific to the `PIPELINE` that is used.
+
+    [procedure] (delete-emitter EMITTER)
+
+Delete the `EMITTER`, removing it from its scene.
+
+    [macro] (for-emitter (PARTICLE-VAR EMITTER ATTRIBUTES) BEGIN UPDATE)
+
+Iterates through the particles in `EMITTER`, assigning each one in sequence to the variable `PARTICLE-VAR` and executing `UPDATE`. The `BEGIN` form is used to perform any one-time actions that require the same scope, e.g. adding new particles. Particles added in `BEGIN` are not processed with `UPDATE`.
+
+`ATTRIBUTES` is a list of the emitter’s attributes that should have accessors bound. Each attribute has a `(ATTRIBUTE-ref PARTICLE)` and `(ATTRIBUTE-set! PARTICLE VALUE)` function bound in the scope to the `BEGIN` and `UPDATE` forms, which are used to reference and set the attributes of the given particle. `ATTRIBUTE-ref` returns an srfi-4 vector of the type and number of the associated attribute, while `ATTRIBUTE-set!`’s `VALUE` should be an srfi-4 vector of the type and number of the attribute.
+
+    [procedure] (add-particle EMITTER)
+
+Return a pointer representing a new particle from `EMITTER`. This particle is not initialized in any way, and should be done so using the accessors that are bound in `for-emitter`.
+
+    [procedure] (delete-particle EMITTER PARTICLE)
+
+Delete the given `PARTICLE` from `EMITTER`.
+
 
 ### Text
 Hypergiant reexports all of [gl-type](http://wiki.call-cc.org/eggref/4/gl-type) with no modifications. The following utilities are additionally provided:
