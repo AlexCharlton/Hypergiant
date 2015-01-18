@@ -15,6 +15,7 @@
 (include "shaders")
 (include "sprites")
 (include "window")
+(include "particles")
 
 (reexport (prefix opengl-glew gl:)
           (except hyperscene
