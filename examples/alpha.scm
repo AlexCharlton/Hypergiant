@@ -1,6 +1,6 @@
 ;;;; alpha.scm
 
-;;;; This example illustrates volumetric alpha sorting. When Hyperscene is compiled with the feature #:volumetric-alpha, the alpha effects of these cubes will appear to be correct. Otherwise (the default), the alpha will malfunction.
+;;;; This example illustrates alpha sorting.
 
 ;;;; NOTE:
 ;;;; If this file is compiled, since it uses glls-render, it must also be linked with OpenGL
