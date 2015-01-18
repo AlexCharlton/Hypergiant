@@ -640,6 +640,14 @@ The following example shows the creation and addition of a multi-coloured square
 [Prototype to polish: Making games in CHICKEN Scheme with Hypergiant](http://alex-charlton.com/posts/Prototype_to_polish_Making_games_in_CHICKEN_Scheme_with_Hypergiant/) is a blog post that details the creation of a simple game with Hypergiant.
 
 ## Version history
+### Version 0.2.0
+Make sure Hyperscene, soil, glls, gl-utils, noise, and gl-type are up to date before updating Hypergiant.
+
+* Add particle system
+* Add clipboard support
+* Multisampling enabled by default
+* OS X support
+
 ### Version 0.1.0
 * Initial release
 
