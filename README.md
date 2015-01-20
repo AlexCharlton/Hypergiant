@@ -199,7 +199,7 @@ A parameter that may be set to a two argument function, which is called when the
 A parameter that may be set to a two argument function, which is called when the mouse wheel or track-pad is scrolled. The two arguments for the function represent the x and y distance (in pixels) that has been scrolled, respectively.
 
 ### Scenes
-Hypergiant reexports most of [Hyperscene](http://wiki.call-cc.org/eggref/4/hyperscene) except for `init` and `resize-cameras`, since it manages this functionality. `init` and `resize-cameras` are handled by `start`. `add-node` and `set-max-lights!` is modified as described below.
+Hypergiant reexports most of [Hyperscene](http://wiki.call-cc.org/eggref/4/hyperscene) except for `resize-cameras`, since it manages this functionality. `resize-cameras` is handled by `start`. `add-node`, `add-light`, `make-camera`, and `set-max-lights!` are modified as described below.
 
 Cameras are automatically resized in Hypergiant so that their projection matrix matches the bounds of the window.
 
@@ -210,6 +210,12 @@ A Hyperscene scene that has one orthographic camera, included for UI elements. T
     [parameter] resize-hooks
 
 A parameter that contains a list of functions of two arguments, width and height, that are called every time the window is resized.
+
+    [procedure] (make-camera TYPE STYLE SCENE [near: NEAR] [far: FAR] [angle: ANGLE] [width: WIDTH] [height: HEIGHT] [viewport-width-ratio: VIEWPORT-WIDTH-RATIO] [viewport-height-ratio: VIEWPORT-HEIGHT-RATIO] [static-viewport?: STATIC-VIEWPORT?])
+
+Identical to Hyperscene’s `make-camera`, except `WIDTH` and `HEIGHT` default to the window’s dimensions.
+
+Create a new camera associated with the given scene. `TYPE` must be one of `#:ortho` or `#:perspective` for an orthographic or a perspective camera, respectively. `STYLE` must be one of `#:position`, `#:look-at`, `#:orbit`, or `#:first-person`. New cameras are automatically activated. `NEAR` is the near plane of the camera, defaulting to `1`. `FAR` is the far plane of the camera, defaulting to `10000`. `ANGLE` is the view-angle, in degrees, for perspective cameras, defaulting to `70`. `WIDTH` and `HEIGHT` should be initialized to the size of camera’s viewport. `VIEWPORT-WIDTH-RATIO` and `VIEWPORT-HEIGHT-RATIO` scale the camera’s viewport (its view frustum’s near plane) in the width and height direction. The effects of the scaling persist after `resize-cameras` is called. If `STATIC-VIEWPORT?` is `#t`, the camera’s viewport dimensions will be fixed such that they won’t be changed by `resize-cameras`, although `VIEWPORT-WIDTH-RATIO` and `VIEWPORT-HEIGHT-RATIO` still effect the final viewport size.
 
     [procedure] (add-light PARENT COLOR INTENSITY [direction: direction] [spot-angle: SPOT-ANGLE] [position: POSITION] [radius: RADIUS])
 
