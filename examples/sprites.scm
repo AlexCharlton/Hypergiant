@@ -22,8 +22,7 @@
 
 (define player-sprite (make-parameter #f))
 (define player-sprite-sheet (make-sprite-sheet 256 256 32 32 rows: 6))
-(m*vector-array! (scaling 2) (mesh-vertex-data player-sprite-sheet)
-                 stride: (mesh-stride player-sprite-sheet))
+
 (define animations (make-animation-alist 
                     `((stand #:loop ,(iota 4))
                       (fall  #:loop ,(iota 4 4))
@@ -33,19 +32,20 @@
                     frame-rate: 0.1))
 (define player (make-parameter #f))
 
-(define ground-mesh (rectangle-mesh 800 200
+(define ground-mesh (rectangle-mesh 400 100
                                     color: (lambda (_) (list 0.4 0.3 0.2))))
-(define sun-mesh (circle-mesh 50 24
+(define sun-mesh (circle-mesh 25 24
                               color: (lambda (_) (list 0.9 0.9 0.3))))
 
 (define jump-velocity (make-parameter #f))
-(define jump-height 12)
-(define jump-accel 60)
+(define jump-height 70)
+(define gravity 600)
+(define initial-velocity (sqrt (* 2 jump-height gravity)))
 (define run-dir (make-parameter 0))
 
 (define (jump)
   (unless (jump-velocity)
-    (jump-velocity (* jump-height jump-accel))
+    (jump-velocity initial-velocity)
     (set-animation! (player) (alist-ref 'fall animations))
     (set-animation! (player) (alist-ref 'jump animations))))
 
@@ -63,12 +63,12 @@
    ((negative? (run-dir)) (face-left)))
   (when (jump-velocity)
     (move-node! (animated-sprite-node (player))
-                (make-point 0 (* (jump-velocity) delta) 0))
-    (if (= (jump-velocity) (- (* jump-height jump-accel)))
+                (make-point 0 (* delta (jump-velocity)) 0))
+    (if (<= (jump-velocity) (- initial-velocity))
         (begin (jump-velocity #f)
                (set-node-position! (animated-sprite-node (player))
                                    (make-point 0 0 0)))
-        (jump-velocity (- (jump-velocity) jump-accel))))
+        (jump-velocity (- (jump-velocity) (* gravity delta)))))
   (unless (jump-velocity)
     (if (= (run-dir) 0)
         (set-animation! (player) (alist-ref 'stand animations))
@@ -105,8 +105,9 @@
   (gl:clear-color 0.6 0.8 1.0 1.0)
   (push-key-bindings keys)
   (scene (make-scene))
-  (camera (make-camera #:ortho #:position (scene)))
-  (set-camera-position! (camera) (make-point 0 100 1))
+  (camera (make-camera #:ortho #:position (scene)
+                       viewport-width-ratio: 0.5 viewport-height-ratio: 0.5))
+  (set-camera-position! (camera) (make-point 0 50 1))
   (frame-rate-font (load-face font 20))
   (add-frame-rate)
   (player-sprite (load-ogl-texture "playersheet.dds" 0 0 0))
@@ -116,9 +117,9 @@
                                    (alist-ref 'stand animations)))
   (add-node (scene) color-pipeline-render-pipeline
             mesh: ground-mesh
-            position: (make-point 0 -130 -2))
+            position: (make-point 0 -65 -2))
   (add-node (scene) color-pipeline-render-pipeline
             mesh: sun-mesh
-            position: (make-point -200 260 0)))
+            position: (make-point -100 130 0)))
 
 (start 640 480 "Sprites" resizable: #f init: init update: update)
