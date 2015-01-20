@@ -11,7 +11,8 @@
         resize-hooks
         frame-rate
         get-clipboard-string
-        set-clipboard-string)
+        set-clipboard-string
+        make-camera)
 
 (define *last-render-time* 0)
 (define ui #f)
@@ -33,11 +34,10 @@
 (define (resize _ w h)
   (gl:viewport 0 0 w h)
   (for-each (cut <> w h) (resize-hooks))
-  (scene:resize-cameras))
+  (scene:resize-cameras w h))
 
 (define (start* width height title . args)
   (%init)
-  (scene:init (lambda () (%get-window-size (%window))))
   (%window-size-callback resize)
   (%mouse-button-callback mouse-click)
   (apply %make-window width height title
@@ -119,6 +119,20 @@
 
 (define (set-clipboard-string string)
   (%set-clipboard-string (%window) string))
+
+(define (make-camera type style scene #!key (near 1) (far 10000) (angle 70)
+                     width height
+                     (viewport-width-ratio 1.0) (viewport-height-ratio 1.0)
+                     static-viewport?)
+  (when (or (not width) (not height))
+    (receive (w h) (get-window-size)
+      (set! width w)
+      (set! height h)))
+  (scene:make-camera type style scene near: near far: far angle: angle
+                     width: width height: height
+                     viewport-width-ratio: viewport-width-ratio
+                     viewport-height-ratio: viewport-height-ratio
+                     static-viewport?: static-viewport?))
 
 ;; Frame rate calculation
 ;; We use a circular buffer to track subsequent frame times
