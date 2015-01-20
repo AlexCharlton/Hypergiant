@@ -20,6 +20,7 @@
 (reexport (prefix opengl-glew gl:)
           (except hyperscene
                   init
+                  make-camera
                   resize-cameras
                   add-node
                   add-light
