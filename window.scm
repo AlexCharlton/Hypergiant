@@ -18,12 +18,14 @@
 (define ui #f)
 (define *ui-camera* #f)
 
-(define (render)
-    (gl:clear (bitwise-ior gl:+color-buffer-bit+ gl:+depth-buffer-bit+))
-    (scene:activate-camera *ui-camera*) ; always draw UI last
-    (scene:render-cameras)
-    (scene:deactivate-camera *ui-camera*)
-    (%swap-buffers (%window)))
+(define (render pre-render post-render)
+  (gl:clear (bitwise-ior gl:+color-buffer-bit+ gl:+depth-buffer-bit+))
+  (pre-render)
+  (scene:activate-camera *ui-camera*) ; always draw UI last
+  (scene:render-cameras)
+  (scene:deactivate-camera *ui-camera*)
+  (post-render)
+  (%swap-buffers (%window)))
 
 (define (move-ui-camera w h)
   (scene:set-camera-position! *ui-camera*
@@ -73,7 +75,9 @@
   ((get-keyword init: args (lambda () (lambda () #f))))
   (gc)
   (set! *last-render-time* (%get-time))
-  (let ((update (get-keyword update: args (lambda () (lambda (delta) #f)))))
+  (let ((update (get-keyword update: args (lambda () (lambda (delta) #f))))
+        (pre-render (get-keyword pre-render: args (lambda () (lambda () #f))))
+        (post-render (get-keyword post-render: args (lambda () (lambda () #f)))))
     (let loop ()
       (let* ((time (%get-time))
              (delta (- time *last-render-time*)))
@@ -83,7 +87,7 @@
         (scene:activate-camera *ui-camera*)
         (scene:update-cameras)
         (scene:deactivate-camera *ui-camera*)
-        (render)
+        (render pre-render post-render)
         (check-error)
         (set! *last-render-time* time)
         (when (feature? csi:)
