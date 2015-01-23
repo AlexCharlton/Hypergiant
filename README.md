@@ -647,6 +647,8 @@ The following example shows the creation and addition of a multi-coloured square
 
 ## Version history
 ### Version 0.3.0
+23 January 2015
+
 Make sure Hyperscene, soil, glls, and gl-math are up to date before updating Hypergiant.
 
 - Add pre & post-rendering keywords to `start`
