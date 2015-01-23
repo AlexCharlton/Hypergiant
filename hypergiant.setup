@@ -26,4 +26,4 @@
  'hypergiant
  '("hypergiant.so" "hypergiant.import.so"
    "hypergiant-render-pipeline.so" "hypergiant-render-pipeline.import.so")
- '((version "0.2.0")))
+ '((version "0.3.0")))
