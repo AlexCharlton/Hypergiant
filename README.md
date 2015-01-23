@@ -74,9 +74,9 @@ Hypergiant is designed to work by default with OpenGL 3.3 and GLSL version 330 (
 
 
 ### Main loop and window
-    [procedure] (start WIDTH HEIGHT TITLE [init: INIT] [update: UPDATE] [cleanup: CLEANUP] . WINDOW-HINTS)
+    [procedure] (start WIDTH HEIGHT TITLE [init: INIT] [update: UPDATE] [pre-render: PRE-RENDER] [post-render: POST-RENDER] [cleanup: CLEANUP] . WINDOW-HINTS)
 
-Start the main body of the program, creating a new window with dimensions `WIDTH` and `HEIGHT`, and the given `TITLE`. `INIT` may be a function of zero arguments that will be called during the initialization sequence, after all libraries are initialized, but before the main loop. `UPDATE` may be a function of one argument (`delta`: the time that passed between the current update and the last one) that is called once per frame before scenes are updated and rendered. `CLEANUP` may be a function of zero arguments which is called before the window is closed. `WINDOW-HINTS` accepts the same keyword arguments as [`make-window`](http://api.call-cc.org/doc/glfw3/make-window).
+Start the main body of the program, creating a new window with dimensions `WIDTH` and `HEIGHT`, and the given `TITLE`. `INIT` may be a function of zero arguments that will be called during the initialization sequence, after all libraries are initialized, but before the main loop. `UPDATE` may be a function of one argument (`delta`: the time that passed between the current update and the last one) that is called once per frame before scenes are updated and rendered. `PRE-RENDER` and `POST-RENDER` may be functions of zero arguments that perform some action immediately before and after `render-cameras` is called, respectively. `CLEANUP` may be a function of zero arguments which is called before the window is closed. `WINDOW-HINTS` accepts the same keyword arguments as [`make-window`](http://api.call-cc.org/doc/glfw3/make-window).
 
     [procedure] (stop)
 
