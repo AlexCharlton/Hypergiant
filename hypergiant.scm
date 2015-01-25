@@ -1,23 +1,29 @@
+;;;; hypergiant.scm
+
+;;;; Main Hypergiant interface
+
 (module hypergiant ()
 
 (import chicken scheme foreign)
-(use (prefix glfw3 %) (prefix glfw3-bindings %%) (prefix glls-render glls:)
-     (prefix opengl-glew gl:) gl-math
-     gl-utils (prefix hyperscene scene:) gl-type
-     srfi-1 srfi-4 srfi-18 srfi-42 srfi-99 data-structures
-     random-mtzig miscmacros noise soil
-     hypergiant-render-pipeline)
+(use opengl-glew gl-math gl-utils gl-type noise soil
+     (prefix hyperscene scene:) (prefix glls-render glls:)
+     hypergiant-render-pipeline
+     hypergiant-window
+     hypergiant-shaders
+     hypergiant-sprites
+     hypergiant-particles
+     hypergiant-geometry)
 
 (include "utils")
-(include "input")
 (include "math")
-(include "geometry")
-(include "shaders")
-(include "sprites")
-(include "window")
-(include "particles")
 
-(reexport (prefix opengl-glew gl:)
+(reexport hypergiant-render-pipeline
+          hypergiant-window
+          hypergiant-shaders
+          hypergiant-sprites
+          hypergiant-particles
+          hypergiant-geometry
+          (prefix opengl-glew gl:)
           (except hyperscene
                   init
                   make-camera
@@ -28,7 +34,6 @@
           (except glls-render
                   define-pipeline
                   export-pipeline)
-          hypergiant-render-pipeline
           gl-math
           (prefix gl-utils-core gl:)
           gl-utils-ply

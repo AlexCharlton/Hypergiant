@@ -1,7 +1,9 @@
 ;;;; particles.scm
 
-(export
- particles
+;;;; Particle system, implemented as a Hyperscene plugin so particles can be sorted by depth before being drawn
+
+(module hypergiant-particles
+(particles
  emitter?
  emitter-node
  add-emitter
@@ -14,6 +16,12 @@
               %emitter-next-particle particle-getter particle-setter
               get-vertex-attribute type->make-vector type->pointer
               emitter-emitter))
+
+(import chicken scheme foreign)
+(use (prefix glls-render glls:) (prefix opengl-glew gl:)
+     gl-utils (prefix hyperscene scene:)
+     srfi-1 srfi-4 srfi-99 miscmacros
+     hypergiant-render-pipeline)
 
 ;;; Bindings
 (foreign-declare "#include \"particles.h\"")
@@ -233,3 +241,4 @@
            update))
        (mesh-update* mesh)
        (%update-emitter %emitter)))))
+) ; end module hypergiant-particles

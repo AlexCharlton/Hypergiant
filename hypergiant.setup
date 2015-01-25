@@ -1,4 +1,5 @@
 ;; hypergiant.setup -*- scheme -*-
+(use make)
 
 (define gl-client
   (cond-expand
@@ -17,13 +18,67 @@
     ((or gles arm) "-lGLESv2")
     (else "-lGL")))
 
-(compile ,compile-options -J -s hypergiant-render-pipeline.scm)
-(compile ,compile-options -s hypergiant-render-pipeline.import.scm)
-(compile ,compile-options ,link-options ,gl-client -J -s hypergiant.scm)
-(compile ,compile-options -s hypergiant.import.scm)
+(make (("hypergiant.so" ("utils.scm"
+                         "math.scm"
+                         "hypergiant-render-pipeline.import.so"
+                         "hypergiant-window.import.so"
+                         "hypergiant-shaders.import.so"
+                         "hypergiant-sprites.import.so"
+                         "hypergiant-particles.import.so"
+                         "hypergiant-geometry.import.so")
+        (compile -J -s ,compile-options ,link-options ,gl-client hypergiant.scm))
+       ("hypergiant.import.so" ("hypergiant.so")
+        (compile -s ,compile-options hypergiant.import.scm))
+       ("hypergiant-render-pipeline.so" ("render-pipeline.scm")
+        (compile -J -s ,compile-options ,link-options ,gl-client render-pipeline.scm
+                 -o hypergiant-render-pipeline.so))
+       ("hypergiant-render-pipeline.import.so" ("hypergiant-render-pipeline.so")
+        (compile -s ,compile-options hypergiant-render-pipeline.import.scm))
+       ("hypergiant-particles.so" ("particles.scm"
+                                   "hypergiant-render-pipeline.import.so")
+        (compile -J -s ,compile-options ,link-options ,gl-client particles.scm
+                 -o hypergiant-particles.so))
+       ("hypergiant-particles.import.so" ("hypergiant-particles.so")
+        (compile -s ,compile-options hypergiant-particles.import.scm))
+       ("hypergiant-window.so" ("window.scm" "input.scm")
+        (compile -J -s ,compile-options ,link-options ,gl-client window.scm
+                 -o hypergiant-window.so))
+       ("hypergiant-window.import.so" ("hypergiant-window.so")
+        (compile -s ,compile-options hypergiant-window.import.scm))
+       ("hypergiant-sprites.so" ("sprites.scm"
+                                 "hypergiant-render-pipeline.import.so"
+                                 "hypergiant-shaders.import.so")
+        (compile -J -s ,compile-options ,link-options ,gl-client sprites.scm
+                 -o hypergiant-sprites.so))
+       ("hypergiant-sprites.import.so" ("hypergiant-sprites.so")
+        (compile -s ,compile-options hypergiant-sprites.import.scm))
+       ("hypergiant-shaders.so" ("shaders.scm"
+                                 "pipelines.scm" "es-pipelines.scm"
+                                 "hypergiant-render-pipeline.import.so")
+        (compile -J -s ,compile-options ,link-options ,gl-client shaders.scm
+                 -o hypergiant-shaders.so))
+       ("hypergiant-shaders.import.so" ("hypergiant-shaders.so")
+        (compile -s ,compile-options hypergiant-shaders.import.scm))
+       ("hypergiant-geometry.so" ("geometry.scm")
+        (compile -J -s ,compile-options ,link-options ,gl-client geometry.scm
+                 -o hypergiant-geometry.so))
+       ("hypergiant-geometry.import.so" ("hypergiant-geometry.so")
+        (compile -s ,compile-options hypergiant-geometry.import.scm)))
+  '("hypergiant.so" "hypergiant.import.so"
+    "hypergiant-render-pipeline.so" "hypergiant-render-pipeline.import.so"
+    "hypergiant-window.so" "hypergiant-window.import.so"
+    "hypergiant-shaders.so" "hypergiant-shaders.import.so"
+    "hypergiant-sprites.so" "hypergiant-sprites.import.so"
+    "hypergiant-particles.so" "hypergiant-particles.import.so"
+    "hypergiant-geometry.so" "hypergiant-geometry.import.so"))
 
 (install-extension
  'hypergiant
  '("hypergiant.so" "hypergiant.import.so"
-   "hypergiant-render-pipeline.so" "hypergiant-render-pipeline.import.so")
+   "hypergiant-render-pipeline.so" "hypergiant-render-pipeline.import.so"
+    "hypergiant-window.so" "hypergiant-window.import.so"
+    "hypergiant-shaders.so" "hypergiant-shaders.import.so"
+    "hypergiant-sprites.so" "hypergiant-sprites.import.so"
+    "hypergiant-particles.so" "hypergiant-particles.import.so"
+    "hypergiant-geometry.so" "hypergiant-geometry.import.so")
  '((version "0.3.0")))

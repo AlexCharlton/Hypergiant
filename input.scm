@@ -1,3 +1,7 @@
+;;;; input.scm
+
+;;;; Imported by window.scm
+
 (export make-bindings
         make-binding
         binding?

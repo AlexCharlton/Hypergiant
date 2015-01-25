@@ -1,7 +1,16 @@
+;;;; shaders.scm
+
+;;;; glls shaders and pipelines for common mesh types
+
+(module hypergiant-shaders
+(phong-lighting
+ set-max-lights!)
+
+(import chicken scheme)
+(use hypergiant-render-pipeline
+     (prefix glls-render glls:) (prefix hyperscene scene:))
 (import-for-syntax glls-compiler)
 
-(export phong-lighting
-        set-max-lights!)
 (export-pipeline
  mesh-pipeline
  color-pipeline
@@ -81,3 +90,5 @@
                         ((<= n 32) phong-lighting-32)
                         ((<= n 64) phong-lighting-64)
                         (else (error 'set-max-lights! "Too many lights" n)))))
+
+) ; end module hypergiant-shaders

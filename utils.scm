@@ -1,6 +1,7 @@
 ;;;; utils.scm
 
 ;;;; Small functions that don't have a home elsewhere
+;;;; Imported by hypergiant.scm
 
 (export update-string-mesh!
         make-rgb-color
@@ -9,6 +10,8 @@
         color-r-set! color-g-set! color-b-set! color-a-set!
         black white
         add-light)
+
+(use srfi-4 miscmacros)
 
 (define (update-string-mesh! mesh node string face)
   (string-mesh string face mesh: mesh)

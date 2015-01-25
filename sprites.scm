@@ -1,14 +1,24 @@
-(export make-sprite-sheet
-        make-animation
-        make-animation-alist
-        set-animation!
-        current-animation
-        make-animated-sprite
-        add-new-animated-sprite
-        update-animated-sprite!
-        animated-sprite?
-        animated-sprite-node
-        animation?)
+;;;; sprites.scm
+
+;;;; Implementation of animated sprites
+
+(module hypergiant-sprites
+(make-sprite-sheet
+ make-animation
+ make-animation-alist
+ set-animation!
+ current-animation
+ make-animated-sprite
+ add-new-animated-sprite
+ update-animated-sprite!
+ animated-sprite?
+ animated-sprite-node
+ animation?)
+
+(import chicken scheme)
+(use (prefix glls-render glls:) (prefix hyperscene scene:) gl-utils
+     hypergiant-render-pipeline hypergiant-shaders
+     srfi-1 srfi-42 srfi-99 miscmacros)
 
 (define-record-type animated-sprite
   %make-animated-sprite #t
@@ -144,3 +154,5 @@
             (glls:set-renderable-offset! (animated-sprite-renderable sprite)
                                          (* frame 12))))
         (animated-sprite-timer-set! sprite timer))))
+
+) ; end module hypergiant-sprites

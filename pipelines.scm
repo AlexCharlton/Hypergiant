@@ -1,3 +1,7 @@
+;;;; pipelines.scm
+
+;;;; Standard GL pipelines, conditionally imported by shaders.scm
+
 (define-pipeline mesh-pipeline
   ((#:vertex input: ((position #:vec3))
              uniform: ((mvp #:mat4)))

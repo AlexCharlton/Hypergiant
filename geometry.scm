@@ -1,9 +1,17 @@
-(export cylinder-mesh
-        rectangle-mesh
-        circle-mesh
-        sphere-mesh
-        cube-mesh
-        line-mesh)
+;;;; geometry.scm
+
+;;;; Generation of geometric primitive meshes
+
+(module hypergiant-geometry
+(cylinder-mesh
+ rectangle-mesh
+ circle-mesh
+ sphere-mesh
+ cube-mesh
+ line-mesh)
+
+(import chicken scheme)
+(use gl-utils gl-math srfi-1 srfi-42 miscmacros data-structures)
 
 (define (index-winding indices winding)
   (ecase winding
@@ -419,3 +427,5 @@
                texture-type
                2
                mode)))
+
+) ; end module hypergiant-geometry

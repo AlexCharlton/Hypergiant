@@ -1,3 +1,7 @@
+;;;; render-pipeline.scm
+
+;;;; render-pipelines combine glls pipelines with hyperscene pipelines
+
 (module hypergiant-render-pipeline
   (export-pipeline
    (define-pipeline make-render-pipeline dynamic-pipeline)
@@ -136,7 +140,6 @@
          (scene:set-node-bounding-sphere! node it))
     node))
 
-;; TODO animated-sprite: arg?
 (define (add-node* parent pipeline . args)
   (define current-vars (list mvp: (scene:current-camera-model-view-projection)
                              view: (scene:current-camera-view)

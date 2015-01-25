@@ -1,3 +1,8 @@
+;;;; math.scm
+
+;;;; Math utilities
+;;;; Imported by hypergiant.scm
+
 (export random-normal
         random-float
         clamp
@@ -8,6 +13,8 @@
         vceiling
         vtruncate
         vfloor)
+
+(use random-mtzig)
 
 (define random-state (random-mtzig:init))
 

@@ -2,17 +2,26 @@
 
 ;;;; Window management for Hypergiant
 
-(export start
-        stop
-        get-window-size
-        get-window-position
-        set-window-position
-        ui
-        resize-hooks
-        frame-rate
-        get-clipboard-string
-        set-clipboard-string
-        make-camera)
+(module hypergiant-window
+(start
+ stop
+ get-window-size
+ get-window-position
+ set-window-position
+ ui
+ resize-hooks
+ frame-rate
+ get-clipboard-string
+ set-clipboard-string
+ make-camera)
+
+(import chicken scheme foreign)
+(use (prefix glfw3 %) (prefix glfw3-bindings %%)
+     (prefix opengl-glew gl:) (prefix glls glls:)
+     gl-math gl-utils (prefix hyperscene scene:)
+     srfi-1 srfi-4 srfi-18 srfi-99 miscmacros)
+
+(include "input")
 
 (define *last-render-time* 0)
 (define ui #f)
@@ -159,3 +168,5 @@
                                                0
                                                (add1 frame-times-counter)))))
     (/ n-frames-1 (- oldest-frame newest-frame))))
+
+) ; end module hypergiant-window

@@ -1,3 +1,8 @@
+/* particles.h
+
+   Hyperscene particle system extension
+ */
+
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
