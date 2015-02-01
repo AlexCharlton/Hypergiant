@@ -41,18 +41,32 @@
 (bitpacket iqm-joint
   (name 32 little unsigned)
   (parent 32 little signed)
-  (rest bitstring))
+  (tx float little) (ty float little) (tz float little)
+  (qx float little) (qy float little) (qz float little) (qw float little)
+  (sx float little) (sy float little) (sz float little))
 
 (bitpacket iqm-pose
   (parent 32 little signed)
   (channel-mask 32 little unsigned)
-  (rest bitstring))
+  (offset-tx float little) (offset-ty float little) (offset-tz float little)
+  (offset-qx float little) (offset-qy float little) (offset-qz float little)
+  (offset-qw float little)
+  (offset-sx float little) (offset-sy float little) (offset-sz float little)
+  (scale-tx float little) (scale-ty float little) (scale-tz float little)
+  (scale-qx float little) (scale-qy float little) (scale-qz float little)
+  (scale-qw float little)
+  (scale-sx float little) (scale-sy float little) (scale-sz float little))
 
 (bitpacket iqm-animation
   (name 32 little unsigned)
   (first-frame 32 little unsigned) (n-frames 32 little unsigned)
-  (framerate floud little)
+  (framerate float little)
   (flags 32 little unsigned))
+
+(bitpacket iqm-bound
+  (bb-min-x float little) (bb-min-y float little) (bb-min-z float little)
+  (bb-max-x float little) (bb-max-y float little) (bb-max-z float little)
+  (xy-radius float little) (radius float little))
 
 (define iqm-custom 16)
 (define vertex-array-types '(position tex-coord normal tangent
@@ -65,49 +79,55 @@
 (define text (make-parameter #f))
 (define n-vertices (make-parameter #f))
 
-(define (offset->bitstring offset #!optional length)
-  (bitstring-share (iqm-file) (byte->bit offset)
-                   (if length
-                       (byte->bit (+ offset length))
-                       (bitstring-end (iqm-file)))))
+(define (offset->bitstring offset)
+  (if (not (zero? offset))
+      (bitstring-share (iqm-file) (byte->bit offset)
+                       (bitstring-end (iqm-file)))
+      #f))
 
 ;; length is a function that returns a integer representing number of bytes
 (define (bitstring-map getter n bs #!key length next)
-  (let loop ((i 0) (acc '()) (bs bs))
-    (if (>= i n)
-        (reverse acc)
-        (let ((el (getter bs)))
-          (loop (add1 i)
-                (cons el acc)
-                (bitstring-share bs
-                                 (if length
-                                     (+ (bitstring-start bs)
-                                        (byte->bit (length el)))
-                                     (next el))
-                                 (bitstring-end bs)))))))
+  (if bs
+      (let loop ((i 0) (acc '()) (bs bs))
+        (if (>= i n)
+            (reverse acc)
+            (let ((el (getter bs)))
+              (loop (add1 i)
+                    (cons el acc)
+                    (bitstring-share bs
+                                     (if length
+                                         (+ (bitstring-start bs)
+                                            (byte->bit (length el)))
+                                         (next el))
+                                     (bitstring-end bs))))))
+      '()))
 
 (define (bitstring->string* bs)
   ((foreign-lambda* c-string ((u8vector str) (size_t offset))
      "C_return(&str[offset]);")
    (bitstring-buffer bs) (bit->byte (bitstring-start bs))))
 
+(define (offset->string offset)
+  (let ((s (bitstring->string* (offset->bitstring (+ (text) offset)))))
+    (and (not (string=? s "")) s)))
+
 (define (bitstring->vector bs type n)
   (let ((vector ((type->make-vector type) n))
         (start (bit->byte (bitstring-start bs)))
-        (end (bit->byte (bitstring-end bs))))
+        (length (* (gl:type->bytes type) n)))
     ((foreign-lambda* void ((c-pointer dest) (u8vector source)
                             (size_t offset) (size_t n))
        "memcpy(dest, (void *) &source[offset], n);")
      (gl:->pointer vector) (bitstring-buffer bs)
-     start (- end start))
+     start length)
     vector))
 
 (define (bitstring->mesh bs)
   (bitmatch bs
     (((iqm-mesh bitpacket)
       (_ bitstring))
-     `((name . ,(list-ref (text) name))
-       (material . ,(list-ref (text) material))
+     `((name . ,(offset->string name))
+       (material . ,(offset->string material))
        (first-vertex . ,first-vertex)
        (n-vertexes . ,n-vertexes)
        (first-triangle . ,first-triangle)
@@ -121,22 +141,62 @@
      (let ((format (list-ref vertex-array-formats format)))
        `((type . ,(if (< type iqm-custom)
                      (list-ref vertex-array-types type)
-                     (string->symbol (list-ref (text) (- type iqm-custom)))))
+                     (string->symbol (offset->string (- type iqm-custom)))))
          (flags . ,flags)
          (format . ,format)
          (size . ,size)
          (array . ,(bitstring->vector
-                    (offset->bitstring offset
-                                       (* size (n-vertices)
-                                          (gl:type->bytes format)))
+                    (offset->bitstring offset)
                     format (* size (n-vertices)))))))
     (else (error 'load-iqm "Poorly formed vertex array"))))
 
-(define (get-text offset n)
-  (map (lambda (s) (and (not (string=? s "")) s))
-       (bitstring-map bitstring->string*
-                      n (offset->bitstring offset)
-                      length: (lambda (s) (add1 (string-length s))))))
+(define (bitstring->joint bs)
+  (bitmatch bs
+    (((iqm-joint bitpacket)
+      (_ bitstring))
+     `((name . ,(offset->string name))
+       (parent . ,parent)
+       (translate . ,(f32vector tx ty tz))
+       (rotate . ,(f32vector qx qy qz qw))
+       (scale . ,(f32vector sx sy sz))))
+    (else (error 'load-iqm "Poorly formed joint"))))
+
+(define (bitstring->pose bs)
+  (bitmatch bs
+    (((iqm-pose bitpacket)
+      (_ bitstring))
+     `((parent . ,parent)
+       (channel-mask . ,channel-mask)
+       (channel-offset-translate . ,(f32vector offset-tx offset-ty offset-tz))
+       (channel-offset-rotate
+        . ,(f32vector offset-qx offset-qy offset-qz offset-qw))
+       (channel-offset-scale . ,(f32vector offset-sx offset-sy offset-sz))
+       (channel-scale-translate . ,(f32vector scale-tx scale-ty scale-tz))
+       (channel-scale-rotate
+        . ,(f32vector offset-qx scale-qy scale-qz scale-qw))
+       (channel-scale-scale . ,(f32vector scale-sx scale-sy scale-sz))))
+    (else (error 'load-iqm "Poorly formed pose"))))
+
+(define (bitstring->animation bs)
+  (bitmatch bs
+    (((iqm-animation bitpacket)
+      (_ bitstring))
+     `((name . ,(offset->string name))
+       (first-frame . ,first-frame)
+       (n-frames . ,n-frames)
+       (framerate . ,framerate)
+       (flags . , flags)))
+    (else (error 'load-iqm "Poorly formed animation"))))
+
+(define (bitstring->bounds bs)
+  (bitmatch bs
+    (((iqm-bound bitpacket)
+      (_ bitstring))
+     `((bb-min . ,(f32vector bb-min-x bb-min-y bb-min-z))
+       (bb-max . ,(f32vector bb-max-x bb-max-y bb-max-z))
+       (xy-radius . ,xy-radius)
+       (radius . ,radius)))
+    (else (error 'load-iqm "Poorly formed bounds"))))
 
 (define (get-meshes offset n)
   (bitstring-map bitstring->mesh n (offset->bitstring offset)
@@ -146,6 +206,26 @@
   (bitstring-map bitstring->vertex-array
                  n (offset->bitstring offset)
                  length: (lambda (_) 20)))
+
+(define (get-joints offset n)
+  (bitstring-map bitstring->joint
+                 n (offset->bitstring offset)
+                 length: (lambda (_) 48)))
+
+(define (get-poses offset n)
+  (bitstring-map bitstring->pose
+                 n (offset->bitstring offset)
+                 length: (lambda (_) 88)))
+
+(define (get-animations offset n)
+  (bitstring-map bitstring->animation
+                 n (offset->bitstring offset)
+                 length: (lambda (_) 20)))
+
+(define (get-bounds offset n)
+  (bitstring-map bitstring->bounds
+                 n (offset->bitstring offset)
+                 length: (lambda (_) 32)))
 
 (define (get-vertex-array vertex-arrays attribute)
   (if* (find (lambda (va) (equal? (alist-ref 'type va)
@@ -164,18 +244,40 @@
                  (find (cut equal? type <>) (normalized-attributes)))))
        attributes))
 
+(define (get-triangles offset n)
+  (if* (offset->bitstring offset)
+       (bitstring->vector
+        (offset->bitstring offset) #:uint (* n 3))
+       '()))
+
+(define (get-frames offset n-frames n-frame-channels)
+  (if (not (zero? offset))
+      (map (lambda (i)
+             (bitstring->vector (offset->bitstring (+ (* i n-frame-channels
+                                                         2)
+                                                      offset))
+                         #:ushort
+                         n-frame-channels))
+           (iota n-frames))
+      '()))
+
 (define-record-type iqm
   #t #t
   (meshes) (vertex-arrays) (n-vertexes) (n-triangles)
   (triangles) (adjacencies)
-  ;TODO (joints) (poses) (animations) ;(frames) (bounds) part of animation?
-  )
+  (joints) (poses) (animations) (frames) (bounds))
 
 (define-record-printer (iqm iqm out)
-  (fprintf out "#<iqm vertexes: ~S triangles ~S meshes: ~S vertex-arrays: ~S>"
-    ;; TODO
+  (fprintf out "#<iqm vertexes: ~S triangles~%     ~S meshes: ~S~%     vertex-arrays: ~S~%     joints: ~S~%     animations: ~S~%     poses: ~S~%     frames: ~S bounds: ~S>"
     (iqm-n-vertexes iqm) (iqm-n-triangles iqm)
-    (iqm-meshes iqm) (map (cut alist-ref 'type <>) (iqm-vertex-arrays iqm))))
+    (iqm-meshes iqm) (map (cut alist-ref 'type <>) (iqm-vertex-arrays iqm))
+    (map (lambda (j)
+           (list (alist-ref 'name j)
+                 (alist-ref 'parent j)))
+         (iqm-joints iqm))
+    (map (cut alist-ref 'name <>) (iqm-animations iqm))
+    (map (cut alist-ref 'parent <>) (iqm-poses iqm)) ; TODO remove
+    (length (iqm-frames iqm)) (length (iqm-bounds iqm))))
 
 (define (load-iqm file)
   (bitmatch (file->u8vector file)
@@ -184,23 +286,18 @@
      (unless (= version 2)
        (error 'load-iqm "Only IQM version 2 is supported:" file))
      (parameterize ((iqm-file rest))
-       (parameterize ((text (get-text text-offset n-text)))
+       (parameterize ((text text-offset))
          (parameterize ((n-vertices n-vertexes))
            (make-iqm (get-meshes meshes-offset n-meshes)
                      (get-vertex-arrays vertex-arrays-offset n-vertex-arrays)
                      n-vertexes n-triangles
-                     (bitstring->vector
-                      (offset->bitstring triangles-offset
-                                         (* 3 n-triangles
-                                            (gl:type->bytes #:uint)))
-                      #:uint (* n-triangles 3))
-                     (bitstring->vector
-                      (offset->bitstring adjacency-offset
-                                         (* 3 n-triangles
-                                            (gl:type->bytes #:uint)))
-                      #:uint (* n-triangles 3))
-                     ;; TODO more
-                     )))))
+                     (get-triangles triangles-offset n-triangles)
+                     (get-triangles adjacency-offset n-triangles)
+                     (get-joints joints-offset n-joints)
+                     (get-poses poses-offset n-poses)
+                     (get-animations animations-offset n-animations)
+                     (get-frames frames-offset n-frames n-frame-channels)
+                     (get-bounds bounds-offset n-frames))))))
     (else (error 'load-iqm "Poorly formed IQM file:" file))))
 
 (define (index-copy mesh iqm)
