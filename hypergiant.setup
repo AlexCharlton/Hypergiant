@@ -25,7 +25,8 @@
                          "hypergiant-shaders.import.so"
                          "hypergiant-sprites.import.so"
                          "hypergiant-particles.import.so"
-                         "hypergiant-geometry.import.so")
+                         "hypergiant-geometry.import.so"
+                         "hypergiant-models.import.so")
         (compile -J -s ,compile-options ,link-options ,gl-client hypergiant.scm))
        ("hypergiant.import.so" ("hypergiant.so")
         (compile -s ,compile-options hypergiant.import.scm))
@@ -63,14 +64,21 @@
         (compile -J -s ,compile-options ,link-options ,gl-client geometry.scm
                  -o hypergiant-geometry.so))
        ("hypergiant-geometry.import.so" ("hypergiant-geometry.so")
-        (compile -s ,compile-options hypergiant-geometry.import.scm)))
+        (compile -s ,compile-options hypergiant-geometry.import.scm))
+       ("hypergiant-models.so" ("models.scm" "iqm.scm";TODO ensure complete
+                                )
+        (compile -J -s ,compile-options ,link-options ,gl-client models.scm
+                 -o hypergiant-models.so))
+       ("hypergiant-models.import.so" ("hypergiant-models.so")
+        (compile -s ,compile-options hypergiant-models.import.scm)))
   '("hypergiant.so" "hypergiant.import.so"
     "hypergiant-render-pipeline.so" "hypergiant-render-pipeline.import.so"
     "hypergiant-window.so" "hypergiant-window.import.so"
     "hypergiant-shaders.so" "hypergiant-shaders.import.so"
     "hypergiant-sprites.so" "hypergiant-sprites.import.so"
     "hypergiant-particles.so" "hypergiant-particles.import.so"
-    "hypergiant-geometry.so" "hypergiant-geometry.import.so"))
+    "hypergiant-geometry.so" "hypergiant-geometry.import.so"
+    "hypergiant-models.so" "hypergiant-models.import.so"))
 
 (install-extension
  'hypergiant
@@ -80,5 +88,6 @@
     "hypergiant-shaders.so" "hypergiant-shaders.import.so"
     "hypergiant-sprites.so" "hypergiant-sprites.import.so"
     "hypergiant-particles.so" "hypergiant-particles.import.so"
-    "hypergiant-geometry.so" "hypergiant-geometry.import.so")
+    "hypergiant-geometry.so" "hypergiant-geometry.import.so"
+    "hypergiant-models.so" "hypergiant-models.import.so")
  '((version "0.3.0")))

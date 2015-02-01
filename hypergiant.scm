@@ -12,7 +12,8 @@
      hypergiant-shaders
      hypergiant-sprites
      hypergiant-particles
-     hypergiant-geometry)
+     hypergiant-geometry
+     hypergiant-models)
 
 (include "utils")
 (include "math")
@@ -23,6 +24,7 @@
           hypergiant-sprites
           hypergiant-particles
           hypergiant-geometry
+          hypergiant-models
           (prefix opengl-glew gl:)
           (except hyperscene
                   init
