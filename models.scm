@@ -11,10 +11,4 @@
 
 (include "iqm")
 
-;(define cube (load-iqm "tests/cube.iqm"))
-;(print cube)
-;(print (iqm->mesh cube '(position)))
-;(load-iqm "tests/Frankie.iqm")
-
-
 ) ; end module hypergiant-models
