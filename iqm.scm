@@ -307,6 +307,7 @@
                  (n-frames (alist-ref 'n-frames a)))
              `((name . ,(alist-ref 'name a))
                (framerate . ,(alist-ref 'framerate a))
+               (n-frames . ,n-frames)
                (flags . ,(alist-ref 'flags a))
                (frames . ,(take (drop frames first-frame)
                                 n-frames))
@@ -322,7 +323,8 @@
 (define-record-printer (iqm iqm out)
   (fprintf out "#<iqm vertexes: ~S triangles: ~S~%     meshes: ~S~%     vertex-arrays: ~S~%     joints: ~S~%     animations: ~S~%     flags: ~S~%     comment: ~S>"
     (iqm-n-vertexes iqm) (iqm-n-triangles iqm)
-    (iqm-meshes iqm) (map (cut alist-ref 'type <>) (iqm-vertex-arrays iqm))
+    (iqm-meshes iqm)
+    (map (cut alist-ref 'type <>) (iqm-vertex-arrays iqm))
     (map (lambda (j)
            (list (alist-ref 'name j)
                  (alist-ref 'parent j)))
@@ -365,7 +367,10 @@
            (list type
                  (alist-ref 'format array)
                  (alist-ref 'size array)
-                 (find (cut equal? type <>) (normalized-attributes)))))
+                 normalized:
+                 (if (find (cut equal? type <>) (normalized-attributes))
+                     #t
+                     #f))))
        attributes))
 
 (define (index-copy mesh iqm)
