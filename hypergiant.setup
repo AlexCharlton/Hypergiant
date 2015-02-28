@@ -13,7 +13,7 @@
 
 (define link-options
   (cond-expand
-    (macosx "-framework OpenGL")
+    (macosx "-framework OpenGL -L '-undefined dynamic_lookup'")
     (windows "-lopengl32")
     ((or gles arm) "-lGLESv2")
     (else "-lGL")))
