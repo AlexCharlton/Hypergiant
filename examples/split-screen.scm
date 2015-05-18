@@ -70,12 +70,15 @@
   (update-camera (camera-l)))
 
 ;; Use gl:scissor to ensure that each camera only gets rendered to one half of the screen
+;; Framebuffer size is used to ensure that this works on displays of all pixel densities
 (define (pre-render)
-  (gl:scissor 0 0 320 480)
-  (render-camera (camera-l))
-  (gl:scissor 320 0 320 480)
-  (render-camera (camera-r))
-  (gl:scissor 0 0 640 480))
+  (let-values (((w h) (get-framebuffer-size)))
+    (let ((w/2 (* w 0.5)))
+      (gl:scissor 0 0 w/2 h)
+     (render-camera (camera-l))
+     (gl:scissor w/2 0 w/2 h)
+     (render-camera (camera-r))
+     (gl:scissor 0 0 w h))))
 
 (start 640 480 "Split-screen" resizable: #f init: init update: update
        pre-render: pre-render)
