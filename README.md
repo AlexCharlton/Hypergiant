@@ -86,6 +86,10 @@ Ends the main loop and closes the windowing, triggering any cleanup that was pas
 
 Return the size of the window as two values: width and height.
 
+    [procedure] (get-framebuffer-size)
+
+Return the size of the framebufffer as two values: width and height.
+
     [procedure] (get-time)
 
 Return the time, in seconds, that has elapsed since `start` was called.
