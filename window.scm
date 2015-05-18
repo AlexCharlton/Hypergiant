@@ -6,6 +6,7 @@
 (start
  stop
  get-window-size
+ get-framebuffer-size
  get-window-position
  set-window-position
  ui
@@ -43,7 +44,8 @@
 (define resize-hooks (make-parameter (list move-ui-camera)))
 
 (define (resize _ w h)
-  (gl:viewport 0 0 w h)
+  (let-values (((w h) (get-framebuffer-size)))
+    (gl:viewport 0 0 w h))
   (for-each (cut <> w h) (resize-hooks))
   (scene:resize-cameras w h))
 
@@ -120,6 +122,9 @@
 
 (define (get-window-size)
   (%get-window-size (%window)))
+
+(define (get-framebuffer-size)
+  (%get-framebuffer-size (%window)))
 
 (define (get-window-position)
   (%get-window-position (%window)))
