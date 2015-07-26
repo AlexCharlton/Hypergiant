@@ -12,7 +12,8 @@
         vround
         vceiling
         vtruncate
-        vfloor)
+        vfloor
+        next-power-of-two)
 
 (use random-mtzig)
 
@@ -69,3 +70,7 @@
               (truncate (point-y v))
               (truncate (point-z v))
               non-gc?))
+
+(define (next-power-of-two n)
+  (inexact->exact (expt 2 (ceiling (/ (log n)
+                                      (log 2))))))
