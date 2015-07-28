@@ -15,7 +15,7 @@
         vfloor
         next-power-of-two)
 
-(use random-mtzig)
+(use (prefix random-mtzig random-mtzig:))
 
 (define random-state (random-mtzig:init))
 
