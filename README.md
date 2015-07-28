@@ -595,6 +595,10 @@ Return a semi-random floating point value. The values will be generated to fall 
 
 Return a random floating point value between -1 and 1.
 
+    [procedure] (next-power-of-two n)
+
+Returns the next power of two for the positive integer `n`.
+
     [procedure] (clamp X LOWER UPPER)
 
 Given the number `X`, return a value that is the same, so long as it is not greater than `UPPER` or less than `LOWER`: in these cases, return the upper or lower bound, respectively.
