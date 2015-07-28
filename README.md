@@ -595,7 +595,7 @@ Return a semi-random floating point value. The values will be generated to fall 
 
 Return a random floating point value between -1 and 1.
 
-    [procedure] (next-power-of-two n)
+    [procedure] (next-power-of-two N)
 
 Returns the next power of two for the positive integer `n`.
 
