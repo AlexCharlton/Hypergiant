@@ -2,6 +2,7 @@
 *.import.scm
 *.so
 *.o
+.DS_Store
 README.svnwiki
 /examples/go
 /examples/particles
