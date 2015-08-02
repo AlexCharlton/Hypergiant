@@ -13,9 +13,23 @@
  update-animated-sprite!
  animated-sprite?
  animated-sprite-node
- animation?)
+ animation?
+ animation-frame-rate
+ animation-n-frames
+ animation-frames)
 
 (import chicken scheme)
+
+;; For internal use
+(export
+ animated-sprite
+ animated-sprite-timer-set!
+ animated-sprite-frame-set!
+ animated-sprite-animation-set!
+ animated-sprite-timer
+ animated-sprite-frame
+ animated-sprite-animation)
+
 (use (prefix glls-render glls:) (prefix hyperscene scene:) gl-utils
      hypergiant-render-pipeline hypergiant-shaders
      srfi-1 srfi-42 srfi-99 miscmacros)
@@ -27,7 +41,7 @@
 
 (define-record-type animation
   %make-animation #t
-  (type) (frames) (n-frames) (frame-rate))
+  (type) (frames) (n-frames) (frame-rate) (bounds))
 
 (define (make-sprite-sheet tex-w tex-h frame-w frame-h
                            #!key rows columns (x-offset 0) (y-offset 0)
@@ -92,8 +106,9 @@
                         tex: texture)))
     (make-animated-sprite node base-animation)))
 
-(define (make-animation type frames frame-rate)
-  (%make-animation type frames (length frames) frame-rate))
+(define (make-animation type frames frame-rate #!key bounds n-frames)
+  (%make-animation type frames (or n-frames (length frames))
+                   frame-rate bounds))
 
 (define (make-animation-alist animations #!key frame-rate)
   (map (lambda (a)

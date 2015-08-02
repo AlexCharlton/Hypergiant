@@ -65,8 +65,8 @@
                  -o hypergiant-geometry.so))
        ("hypergiant-geometry.import.so" ("hypergiant-geometry.so")
         (compile -s ,compile-options hypergiant-geometry.import.scm))
-       ("hypergiant-models.so" ("models.scm" "iqm.scm";TODO ensure complete
-                                )
+       ("hypergiant-models.so" ("models.scm" "iqm.scm"
+                                "hypergiant-sprites.import.so")
         (compile -J -s ,compile-options ,link-options ,gl-client models.scm
                  -o hypergiant-models.so))
        ("hypergiant-models.import.so" ("hypergiant-models.so")

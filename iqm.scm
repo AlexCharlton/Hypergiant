@@ -12,6 +12,8 @@
         iqm-adjacencies
         iqm-joints
         iqm-animations
+        iqm-base-frame ;; Exported for tests
+        iqm-inverse-base-frame ;; Exported for tests
         iqm-flags
         iqm-comment
         iqm->mesh
@@ -198,9 +200,9 @@
        (channel-offset . ,(f32vector offset-tx offset-ty offset-tz
                                      offset-qx offset-qy offset-qz offset-qw
                                      offset-sx offset-sy offset-sz))
-       (channel-scale . ,(f32vector offset-tx offset-ty offset-tz
-                                    offset-qx offset-qy offset-qz offset-qw
-                                    offset-sx offset-sy offset-sz))))
+       (channel-scale . ,(f32vector scale-tx scale-ty scale-tz
+                                    scale-qx scale-qy scale-qz scale-qw
+                                    scale-sx scale-sy scale-sz))))
     (else (error 'load-iqm "Poorly formed pose"))))
 
 (define (bitstring->animation bs)
@@ -273,7 +275,7 @@
                          (* n-frames n-frame-channels))
       '()))
 
-(define (build-frames poses frames n-frames)
+(define (build-poses poses frames n-frames)
   (define frame-counter 0)
   (define (pop-frame)
     (begin0 (u16vector-ref frames frame-counter)
@@ -295,30 +297,109 @@
                   `((translate . ,(f32vector (first r) (second r) (third r)))
                     (rotate . ,(f32vector (fourth r) (fifth r) (sixth r)
                                          (seventh r)))
-                    (scale . ,(f32vector (eighth r) (ninth r) (tenth r))))))
+                    (scale . ,(f32vector (eighth r) (ninth r) (tenth r)))
+                    (parent . ,(alist-ref 'parent pose)))))
               poses))
        (iota n-frames)))
 
-(define (build-animation animations poses frames bounds n-frames)
-  (let ((frames (build-frames poses frames n-frames))
-        (bounds (and (not (null? bounds)) bounds)))
-    (map (lambda (a)
-           (let ((first-frame (alist-ref 'first-frame a))
-                 (n-frames (alist-ref 'n-frames a)))
-             `((name . ,(alist-ref 'name a))
-               (framerate . ,(alist-ref 'framerate a))
-               (n-frames . ,n-frames)
-               (flags . ,(alist-ref 'flags a))
-               (frames . ,(take (drop frames first-frame)
-                                n-frames))
-               (bounds . ,(and bounds (take (drop bounds first-frame)
-                                            n-frames))))))
-         animations)))
+(define (build-frame-matrix-array array poses frames
+                                  base-frame inverse-base-frame
+                                  n-frames n-poses)
+  (for-each
+   (lambda (poses i)
+     (for-each
+      (lambda (pose j)
+        (let* ((quat (alist-ref 'rotate pose))
+               (trans (alist-ref 'translate pose))
+               (scale (alist-ref 'scale pose))
+               (parent (alist-ref 'parent pose))
+               (m (gl:->pointer (translate
+                                 trans
+                                 (rotate-quaternion
+                                  quat
+                                  (3d-scaling (f32vector-ref scale 0)
+                                              (f32vector-ref scale 1)
+                                              (f32vector-ref scale 2))))))
+               (dest (nth-matrix array
+                                 (+ (* i n-poses) j))))
+          (if (>= parent 0)
+              (let ((m*inverse (gl:->pointer (make-f32vector 16))))
+                (m* m (nth-matrix inverse-base-frame j)
+                    m*inverse)
+                (m* (nth-matrix base-frame parent)
+                    m*inverse
+                    dest))
+              (m* m (nth-matrix inverse-base-frame j)
+                  dest))))
+      poses (iota n-poses)))
+   poses (iota n-frames)))
+
+(define (build-animations animations poses frames bounds
+                         base-frame inverse-base-frame n-frames)
+  (let ((poses (build-poses poses frames n-frames))
+        (n-poses (length (car poses)))
+        (bounds (and (not (null? bounds)) bounds))
+        (parents (map (cut alist-ref 'parent <>)
+                      poses)))
+    (map
+     (lambda (a)
+       (let* ((first-frame (alist-ref 'first-frame a))
+              (n-frames (alist-ref 'n-frames a))
+              (poses  (take (drop poses first-frame)
+                            n-frames))
+              (frame-matrix-array (make-matrix-array (* n-frames n-poses))))
+         (build-frame-matrix-array frame-matrix-array poses frames
+                                   base-frame inverse-base-frame
+                                   n-frames n-poses)
+         (cons (string->symbol (alist-ref 'name a))
+               (make-animation (if (member #:loop (alist-ref 'flags a))
+                                   #:loop
+                                   #:once)
+                               (cons frame-matrix-array
+                                     (list->vector parents))
+                               (/ (alist-ref 'framerate a) 60)
+                               bounds: (and bounds (take (drop bounds first-frame)
+                                                         n-frames))
+                               n-frames: n-frames))))
+     animations)))
+
+(define (calc-base-frame base-frame inverse-base-frame joints)
+  (do ((joints joints (cdr joints))
+       (i 0 (add1 i)))
+      ((null? joints))
+    (let* ((joint (car joints))
+           (scale (alist-ref 'scale joint))
+           (trans (alist-ref 'translate joint))
+           (rot (alist-ref 'rotate joint))
+           (temp-m
+            (translate
+             trans
+             (rotate-quaternion
+              rot
+              (3d-scaling (f32vector-ref scale 0)
+                          (f32vector-ref scale 1)
+                          (f32vector-ref scale 2)))))
+           (temp-m-inverse (inverse temp-m))
+           (m-base-frame (nth-matrix base-frame i))
+           (m-inverse-base-frame (nth-matrix inverse-base-frame i))
+           (parent (alist-ref 'parent joint)))
+      (if (>= parent 0)
+          (begin
+            (m* (nth-matrix base-frame parent)
+                (gl:->pointer temp-m)
+                m-base-frame)
+            (m* (gl:->pointer temp-m-inverse)
+                (nth-matrix inverse-base-frame parent)
+                m-inverse-base-frame))
+          (begin
+            (copy-mat4 (gl:->pointer temp-m) m-base-frame)
+            (copy-mat4 (gl:->pointer temp-m-inverse)
+                       m-inverse-base-frame))))))
 
 (define-record-type iqm
   #t #t
   (meshes) (vertex-arrays) (n-vertexes) (n-triangles) (triangles) (adjacencies)
-  (joints) (animations) (flags) (comment))
+  (joints) (base-frame) (inverse-base-frame) (animations) (flags) (comment))
 
 (define-record-printer (iqm iqm out)
   (fprintf out "#<iqm vertexes: ~S triangles: ~S~%     meshes: ~S~%     vertex-arrays: ~S~%     joints: ~S~%     animations: ~S~%     flags: ~S~%     comment: ~S>"
@@ -329,10 +410,10 @@
            (list (alist-ref 'name j)
                  (alist-ref 'parent j)))
          (iqm-joints iqm))
-    (map (cut alist-ref 'name <>) (iqm-animations iqm))
+    (map car (iqm-animations iqm))
     (iqm-flags iqm) (iqm-comment iqm)))
 
-(define (load-iqm file)
+(define (load-iqm file #!optional base-iqm)
   (bitmatch (file->u8vector file)
     (((iqm-header bitpacket)
       (rest bitstring))
@@ -345,18 +426,42 @@
                  (poses (get-poses poses-offset n-poses))
                  (frames (get-frames frames-offset n-frames n-frame-channels))
                  (bounds (get-bounds bounds-offset n-frames))
-                 (comment-bitstring (offset->bitstring comment-offset)))
-             (make-iqm (get-meshes meshes-offset n-meshes)
-                       (get-vertex-arrays vertex-arrays-offset n-vertex-arrays)
-                       n-vertexes n-triangles
-                       (get-triangles triangles-offset n-triangles)
-                       (get-triangles adjacency-offset n-triangles)
-                       (get-joints joints-offset n-joints)
-                       (build-animation animations poses frames bounds
-                                        n-frames)
-                       (get-flags flags iqm-global-flags)
-                       (and comment-bitstring
-                            (bitstring->string comment-bitstring))))))))
+                 (comment-bitstring (offset->bitstring comment-offset))
+                 (temp-base-frame #f)
+                 (temp-inverse-base-frame #f)
+                 (base-frame #f)
+                 (inverse-base-frame #f)
+                 (joints (get-joints joints-offset n-joints)))
+             (cond 
+              ((positive? n-joints)
+               (set! base-frame (make-matrix-array n-joints))
+               (set! inverse-base-frame (make-matrix-array n-joints))
+               (set! temp-base-frame base-frame)
+               (set! temp-inverse-base-frame inverse-base-frame)
+               (calc-base-frame base-frame inverse-base-frame joints))
+              (base-iqm
+                (set! temp-base-frame (iqm-base-frame base-iqm))
+                (set! temp-inverse-base-frame
+                     (iqm-inverse-base-frame base-iqm))))
+             (set-finalizer!
+              (make-iqm (get-meshes meshes-offset n-meshes)
+                        (get-vertex-arrays vertex-arrays-offset n-vertex-arrays)
+                        n-vertexes n-triangles
+                        (get-triangles triangles-offset n-triangles)
+                        (get-triangles adjacency-offset n-triangles)
+                        joints
+                        base-frame inverse-base-frame
+                        (and temp-base-frame
+                             (build-animations animations poses frames bounds
+                                               temp-base-frame temp-inverse-base-frame
+                                               n-frames))
+                        (get-flags flags iqm-global-flags)
+                        (and comment-bitstring
+                             (bitstring->string comment-bitstring)))
+              (lambda (a)
+                (when iqm-base-frame
+                  (free (iqm-base-frame a))
+                  (free (iqm-inverse-base-frame a))))))))))
     (else (error 'load-iqm "Poorly formed IQM file:" file))))
 
 ;;; IQM -> mesh
@@ -443,6 +548,12 @@
              mesh))
          (iqm-meshes iqm))))
 
+;;; IQM -> animated model
+(define (make-iqm-animated-model node iqm base-animation-name)
+  (make-animated-model node (alist-ref base-animation-name
+                                       (iqm-animations iqm))
+                       (length (iqm-joints iqm))))
+
 ;;; Utils
 (define (bit->byte x) (arithmetic-shift x -3))
 (define (byte->bit x) (arithmetic-shift x 3))
@@ -464,3 +575,6 @@
      make-u32vector)
     ((float: float32:) make-f32vector)
     ((double: float64:) make-f64vector)))
+
+(define (make-matrix-array n) (allocate (* 4 16 n)))
+(define (nth-matrix m n) (pointer+ m (* 4 16 n)))
