@@ -7,6 +7,7 @@
 
 (define delta 0.00000001)
 (define mrfixit (load-iqm "./mrfixit.iqm"))
+(define n-joints (length (iqm-joints mrfixit)))
 
 (define (nth-3x4-matrix m n) (pointer+ m (* 3 12 n)))
 
@@ -45,8 +46,8 @@
 (define hpg-base-frames (iqm-base-frame mrfixit))
 (define hpg-inverse-base-frames (iqm-inverse-base-frame mrfixit))
 
-(define (compare-frames fc f n)
-  (dotimes (i n)
+(define (compare-frames fc f)
+  (dotimes (i n-joints)
     (unless (m4x4-3x4-eq? (nth-matrix f i)
                           (nth-matrix fc i))
       (print "Frame " i " incorrect: ")
@@ -58,12 +59,10 @@
 
 (test-assert "base frames are correct"
              (compare-frames cannonical-base-frames
-                             hpg-base-frames
-                             75))
+                             hpg-base-frames))
 (test-assert "inverse base frames are correct"
              (compare-frames cannonical-inverse-base-frames
-                             hpg-inverse-base-frames
-                             75))
+                             hpg-inverse-base-frames))
 (test-end)
 
 (test-begin "iqm animation matrices")
@@ -71,9 +70,8 @@
 (define pose-matrices* (file->u8vector "./pose-matrices"))
 (define cannonical-pose-matrices (gl:->pointer pose-matrices*))
 (define anim (alist-ref 'idle (iqm-animations mrfixit)))
-(define hpg-pose-matrices (car (animation-frames anim)))
-(define n-joints (length (iqm-joints mrfixit)))
 (define n-frames (animation-n-frames anim))
+(define hpg-pose-matrices (car (animation-frames anim)))
 
 (define (compare-matrices)
   (dotimes (i n-frames)
