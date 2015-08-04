@@ -337,7 +337,7 @@
 (define (build-animations animations poses frames bounds
                          base-frame inverse-base-frame n-frames)
   (let ((poses (build-poses poses frames n-frames))
-        (n-poses (length (car poses)))
+        (n-poses (length poses))
         (bounds (and (not (null? bounds)) bounds))
         (parents (map (cut alist-ref 'parent <>)
                       poses)))

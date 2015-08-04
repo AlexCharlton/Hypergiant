@@ -7,7 +7,7 @@
 
 
 ;; Utils
-(define delta 0.00001)
+(define delta 0.0005)
 (define mrfixit (load-iqm "./mrfixit.iqm"))
 (define n-joints (length (iqm-joints mrfixit)))
 
