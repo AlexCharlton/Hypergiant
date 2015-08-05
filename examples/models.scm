@@ -20,17 +20,10 @@
 (define c-roll (make-parameter 0))
 
 ;; (define iqm-frankie (load-iqm "Frankie.iqm"))
-;;(define frankie-run (load-iqm "Frankie_Run.iqm"))
-;; (define run-animation (car (iqm-animations frankie-run)))
+;; (define frankie-run (load-iqm "Frankie_Run.iqm"))
 (define iqm-model (load-iqm "mrfixit.iqm"))
-;; (print iqm-model)
-;; (print (length (iqm-joints iqm-model)))
 
 (define model (iqm->mesh iqm-model '(position tex-coord blend-indexes blend-weights)))
-;;(print (mesh-vertex-attributes model))
-;; (for-each (lambda (i)
-;;             (print i " "(mesh-vertex-ref model 'blend-indexes i)))
-;;           (iota (mesh-n-vertices model)))
 
 (define keys (make-bindings
               `((quit ,+key-escape+ press: ,stop)
@@ -59,9 +52,7 @@
        (+= m (* (array-ref bone-matrices (int bindices.w)) bweights.w))
        (set! gl:position (* mvp
                             m
-                            (vec4 position 1.0)
-                            ;m
-                            ))
+                            (vec4 position 1.0)))
        (set! tex-c tex-coord))))
   ((#:fragment input: ((tex-c #:vec2))
                uniform: ((tex #:sampler-2d))
@@ -102,11 +93,7 @@
     (animated-model ani-model)
     (quaternion-rotate-x (- pi/2) (node-rotation node))
     (quaternion-rotate-y (- pi/2) (node-rotation node))
-    (move-node! node (make-point 0 -4 0))
-    ;; (for-each (lambda (s) (print (shader-source s)))
-    ;;           (pipeline-shaders bone-pipeline))
-    #f
-    ))
+    (move-node! node (make-point 0 -4 0))))
 
 (define (update delta)
   (update-animated-model! (animated-model) delta)

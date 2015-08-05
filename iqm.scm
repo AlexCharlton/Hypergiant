@@ -357,7 +357,7 @@
                                    #:once)
                                (cons frame-matrix-array
                                      (list->vector parents))
-                               (/ (alist-ref 'framerate a) 60)
+                               (/ (alist-ref 'framerate a) 600)
                                bounds: (and bounds (take (drop bounds first-frame)
                                                          n-frames))
                                n-frames: n-frames))))

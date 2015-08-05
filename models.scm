@@ -7,6 +7,7 @@
  animated-model?
 ; add-new-animated-model
  %make-animated-model ;; TODO
+ animate-model-frames
  update-animated-model!)
 
 (import chicken scheme foreign)
@@ -34,6 +35,29 @@
                                           n-joints)
                     (lambda (m) (free (animated-model-current-frame m))))))
 
+(define (animate-model-frames animation frame-matrices n-joints
+                              frame next-frame frame-offset)
+  (let* ((frames (animation-frames animation))
+         (parents (cdr frames))
+         (frames (car frames))
+         (1-frame-offset (- 1 frame-offset)))
+    (dotimes (i n-joints)
+      (let* ((frame (nth-matrix frames (+ (* n-joints frame)
+                                          i)))
+             (next (nth-matrix frames (+ (* n-joints next-frame)
+                                         i)))
+             (m frame ;; (m+ (m*s frame 1-frame-offset)
+                ;;     (m*s next frame-offset))
+                )
+             (parent (vector-ref parents i))
+             (current-frame (nth-matrix frame-matrices i)))
+        ;; need matrix addition, multiplication
+        (if (>= parent 0)
+            (m* (nth-matrix frame-matrices parent)
+                m
+                current-frame)
+            (copy-mat4 m current-frame))))))
+
 (define (update-animated-model! model delta)
   (let* ((animation (current-animation model))
          (momentary? (animated-sprite-animation model))
@@ -49,32 +73,15 @@
               (animated-sprite-animation-set! model #f)
               (animated-sprite-frame-set! model 0))
             (animated-sprite-frame-set! model (modulo (add1 frame)
-                                                     n-frames))))
+                                                      n-frames))))
       (let* ((animation (current-animation model))
              (current-frames (animated-model-current-frame model))
              (frame (animated-sprite-frame model))
-             (next (modulo (add1 frame) n-frames))
-             (frames (animation-frames animation))
-             (parents (cdr frames))
-             (frames (car frames))
-             (frame (nth-matrix frames frame))
-             (next (nth-matrix frames next))
-             (frame-offset (/ timer frame-rate))
-             (1-frame-offset (- 1 frame-offset)))
-        (dotimes (i (animated-model-n-joints model))
-          (let ((m frame ;; (m+ (m*s frame 1-frame-offset)
-                         ;;     (m*s next frame-offset))
-                   )
-                (parent (vector-ref parents i))
-                (current-frame (nth-matrix current-frames i)))
-            ;; need joints parent, matrix addition, multiplication
-            (print "frame " (animated-sprite-frame model) " joint " i)
-            (print-mat4 m)
-            (if (>= parent 0)
-                (m* (nth-matrix current-frames parent)
-                    m
-                    current-frame)
-                (copy-mat4 m current-frame))))))
+             (next-frame (modulo (add1 frame) n-frames))
+             (frame-offset (/ timer frame-rate)))
+        (animate-model-frames animation current-frames
+                              (animated-model-n-joints model)
+                              frame next-frame frame-offset)))
     (animated-sprite-timer-set! model timer)))
 
 (include "iqm")

@@ -15,6 +15,8 @@
 
 (define (nth-matrix m n) (pointer+ m (* 4 16 n)))
 
+(define (make-matrix-array n) (allocate (* 4 16 n)))
+
 (define (matrix-ref m k)
   (pointer-f32-ref (pointer+ m (* 4 k))))
 
@@ -93,5 +95,26 @@
 (test-assert (compare-matrices))
 (test-end)
 
+
+(test-begin "iqm animated matrices")
+(define animated-matrices* (file->u8vector "./animated-matrices"))
+(define cannonical-animated-matrices (gl:->pointer animated-matrices*))
+(define anim (alist-ref 'idle (iqm-animations mrfixit)))
+(define hpg-animated-matrices (make-matrix-array n-joints))
+(animate-model-frames anim hpg-animated-matrices n-joints 0 0 0)
+
+(define (compare-matrices)
+  (dotimes (i n-joints)
+    (unless (m4x4-3x4-eq? (nth-matrix hpg-animated-matrices i)
+                          (nth-3x4-matrix cannonical-animated-matrices i))
+      (print "Joint " i " incorrect: ")
+      (print-mat4 (nth-matrix hpg-animated-matrices i))
+      (print "Should equal")
+      (print-mat3x4 (nth-3x4-matrix cannonical-animated-matrices i))
+      (error 'matrices-not-equal)))
+  #t)
+
+(test-assert (compare-matrices))
+(test-end)
 
 (test-exit)
