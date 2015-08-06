@@ -4,6 +4,7 @@
 
 (module hypergiant-shaders
 (phong-lighting
+ calc-bone-matrix
  set-max-lights!)
 
 (import chicken scheme)
@@ -17,6 +18,18 @@
  texture-pipeline
  sprite-pipeline
  text-pipeline)
+
+(glls:define-shader calc-bone-matrix
+    (#:vertex uniform: ((bone-matrices (#:array #:mat4 100))) ;; TODO solve magic number
+                export: (calc-bone-matrix))
+    (define (calc-bone-matrix (bindices #:vec4) (bweights #:vec4))
+          #:mat4
+      (let ((m #:mat4 (* (array-ref bone-matrices (int bindices.x))
+                         bweights.x)))
+        (+= m (* (array-ref bone-matrices (int bindices.y)) bweights.y))
+        (+= m (* (array-ref bone-matrices (int bindices.z)) bweights.z))
+        (+= m (* (array-ref bone-matrices (int bindices.w)) bweights.w))
+        m)))
 
 (cond-expand
   (gles (include "es-pipelines"))

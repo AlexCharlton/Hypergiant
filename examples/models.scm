@@ -1,6 +1,6 @@
 ;;;; models.scm
 
-;;;; This example illustrates IQM model loading
+;;;; This example illustrates IQM model loading and animating
 
 ;;;; NOTE:
 ;;;; If this file is compiled, since it uses glls-render, it must also be linked with OpenGL
@@ -41,19 +41,14 @@
                      (blend-indexes #:vec4) (blend-weights #:vec4))
              uniform: ((mvp #:mat4)
                        (bone-matrices (#:array #:mat4 100)))
+             use: (calc-bone-matrix)
              output: ((tex-c #:vec2)))
    (define (main) #:void
-     (let* ((bindices #:vec4 blend-indexes)
-            (bweights #:vec4 blend-weights)
-            (m #:mat4 (* (array-ref bone-matrices (int bindices.x))
-                         bweights.x)))
-       (+= m (* (array-ref bone-matrices (int bindices.y)) bweights.y))
-       (+= m (* (array-ref bone-matrices (int bindices.z)) bweights.z))
-       (+= m (* (array-ref bone-matrices (int bindices.w)) bweights.w))
-       (set! gl:position (* mvp
-                            m
-                            (vec4 position 1.0)))
-       (set! tex-c tex-coord))))
+     (set! gl:position (* mvp
+                          (calc-bone-matrix blend-indexes
+                                            blend-weights)
+                          (vec4 position 1.0)))
+     (set! tex-c tex-coord)))
   ((#:fragment input: ((tex-c #:vec2))
                uniform: ((tex #:sampler-2d))
 	       output: ((frag-color #:vec4)))
@@ -77,7 +72,7 @@
 
 (define animated-model (make-parameter #f))
 (define (init)
-  ;(gl:enable gl:+cull-face+)
+  (gl:enable gl:+cull-face+)
   (push-key-bindings keys)
   (gl:clear-color 0.9 0.9 1.0 1)
   (scene (make-scene))
