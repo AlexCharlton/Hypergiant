@@ -749,6 +749,14 @@ The following example shows the creation and addition of a multi-coloured square
 [Prototype to polish: Making games in CHICKEN Scheme with Hypergiant](http://alex-charlton.com/posts/Prototype_to_polish_Making_games_in_CHICKEN_Scheme_with_Hypergiant/) is a blog post that details the creation of a simple game with Hypergiant.
 
 ## Version history
+### Version 0.4.0
+8 August 2015
+
+Make sure gl-math is up to date before updating Hypergiant.
+
+- Add Inter-Quake Model loading and animation
+- Support for Retina displays
+
 ### Version 0.3.0
 23 January 2015
 
