@@ -9,11 +9,17 @@
 
 ;;;; Use arrow keys (and shift) to rotate, zoom camera.
 
+;;;; PS The head of this model looks messed-up since it's supposed
+;;;; to have a separate texture associated with it.
+;;;; This is not currently supported.
+;;;; I think it looks pretty cool like this, though.
+
 (import chicken scheme)
 (use hypergiant lolevel)
 
 (define scene (make-parameter #f))
 (define camera (make-parameter #f))
+(define animated-model (make-parameter #f))
 (define pan (make-parameter 0))
 (define tilt (make-parameter 0))
 (define zoom (make-parameter 0))
@@ -55,24 +61,9 @@
    (define (main) #:void
      (set! frag-color (texture tex tex-c)))))
 
-(define (make-matrix-array n) (allocate (* 4 16 n)))
-(define (add-new-animated-model parent model mesh texture base-animation)
-  (let* ((n-joints (length (iqm-joints model)))
-         (current-frame (make-matrix-array n-joints))
-         (node (add-node parent bone-pipeline-render-pipeline
-                         bone-matrices: current-frame
-                         mesh: mesh
-                         tex: texture))
-         (animated-model (%make-animated-model node #f #f base-animation
-                                               0 0.0
-                                               current-frame n-joints)))
-    ;;(update-animated-model! animated-model 300)
-    animated-model))
-
-
-(define animated-model (make-parameter #f))
 (define (init)
   (gl:enable gl:+cull-face+)
+  (gl:front-face gl:+cw+)
   (push-key-bindings keys)
   (gl:clear-color 0.9 0.9 1.0 1)
   (scene (make-scene))
@@ -82,8 +73,12 @@
   (set-camera-zoom! (camera) 10)
   (let* ((texture (load-ogl-texture "body.tga" 0 0 0)) ;; causing invalid enum error
          (animation (alist-ref 'idle (iqm-animations iqm-model)))
-         (ani-model (add-new-animated-model (scene) iqm-model model
-                                            texture animation))
+         (ani-model (add-new-animated-model (scene)
+                                            bone-pipeline-render-pipeline
+                                            model: iqm-model
+                                            mesh: model
+                                            texture: texture
+                                            base-animation: animation))
          (node (animated-sprite-node ani-model)))
     (animated-model ani-model)
     (quaternion-rotate-x (- pi/2) (node-rotation node))
