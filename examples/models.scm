@@ -72,9 +72,8 @@
          (animation (alist-ref 'idle (iqm-animations iqm-model)))
          (ani-model (add-new-animated-model (scene)
                                             bone-pipeline-render-pipeline
-                                            model: iqm-model
                                             mesh: model-mesh
-                                            texture: texture
+                                            tex: texture
                                             base-animation: animation))
          (node (animated-sprite-node ani-model)))
     (animated-model ani-model)

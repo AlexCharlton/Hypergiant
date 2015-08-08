@@ -101,7 +101,7 @@
 (define cannonical-animated-matrices (gl:->pointer animated-matrices*))
 (define anim (alist-ref 'idle (iqm-animations mrfixit)))
 (define hpg-animated-matrices (make-matrix-array n-joints))
-(animate-model-frames anim hpg-animated-matrices n-joints 0 0 0)
+(animate-model-frames anim hpg-animated-matrices 0 0 0)
 
 (define (compare-matrices)
   (dotimes (i n-joints)

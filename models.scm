@@ -16,7 +16,7 @@
 
 (define-record-type (animated-model animated-sprite)
   %make-animated-model #t
-  (current-frame) (n-joints))
+  (current-frame))
 
 (define (add-new-animated-model parent pipeline . args)
   (define (get-arg arg)
@@ -24,20 +24,17 @@
                  (lambda () (error 'add-new-animated-model
                               (sprintf "Missing ~s keyword" arg)
                               args))))
-  (let* ((model (get-arg model:))
-         (mesh (get-arg mesh:))
-         (texture (get-arg texture:))
+  (let* ((mesh (get-arg mesh:))
          (base-animation (get-arg base-animation:))
-         (n-joints (length (iqm-joints model)))
+         (n-joints (vector-length (cdr (animation-frames base-animation))))
          (current-frame (make-matrix-array n-joints))
-         (node (add-node parent pipeline
-                         bone-matrices: current-frame
-                         mesh: mesh
-                         tex: texture))
+         (node (apply add-node parent pipeline
+                      bone-matrices: current-frame
+                      args))
          (animated-model (%make-animated-model node #f #f base-animation
                                                0 0.0
-                                               current-frame n-joints)))
-    (animate-model-frames base-animation current-frame n-joints 0 0 0)
+                                               current-frame)))
+    (animate-model-frames base-animation current-frame 0 0 0)
     (set-finalizer! animated-model
                     (lambda (m)
                       (free (animated-model-current-frame m))))))
@@ -45,11 +42,12 @@
 (define m (allocate (* 16 4)))
 (define t1 (allocate (* 16 4)))
 (define t2 (allocate (* 16 4)))
-(define (animate-model-frames animation frame-matrices n-joints
+(define (animate-model-frames animation frame-matrices
                               frame next-frame frame-offset)
   (let* ((frames (animation-frames animation))
          (parents (cdr frames))
-         (frames (car frames)))
+         (frames (car frames))
+         (n-joints (vector-length parents)))
     (dotimes (i n-joints)
       (let* ((frame (nth-matrix frames (+ (* n-joints frame)
                                           i)))
@@ -86,7 +84,6 @@
              (next-frame (modulo (add1 frame) n-frames))
              (frame-offset (/ timer frame-rate)))
         (animate-model-frames animation current-frames
-                              (animated-model-n-joints model)
                               frame next-frame frame-offset)))
     (animated-sprite-timer-set! model timer)))
 
