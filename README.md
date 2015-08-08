@@ -7,10 +7,12 @@ Hypergiant should run on anything that supports OpenGL (including ES).
 
 Note that this is an early release of Hypergiant. Some features that you might expect are missing, but there is more to come. Feel free to pass feature requests my way, though. Or better yet: patches!
 
+
 ## Installation
 This repository is a [Chicken Scheme](http://call-cc.org/) egg.
 
 It is part of the [Chicken egg index](http://wiki.call-cc.org/chicken-projects/egg-index-4.html) and can be installed with `chicken-install hypergiant`.
+
 
 ## Requirements
 * opengl-glew
@@ -31,6 +33,7 @@ While Hypergiant doesn’t require any external libraries directly, opengl-glew 
 
 When installing GLFW on OS X through Homebrew, an extra step is needed. Homebrew renames the library’s from the default. You can fix this by creating a link that points to the library that gets installed. E.g. `sudo ln -s <homebrew-lib-dir>/glfw3.dylib /usr/local/lib/glfw.dylib`
 
+
 ## Documentation
 Hypergiant is a largely a glue library, intending to make the creation of real-time graphical applications easier. The main tasks that it supports are:
 
@@ -38,6 +41,7 @@ Hypergiant is a largely a glue library, intending to make the creation of real-t
 - Hypergiant acts as a glue between Hyperscene and glls. These two libraries were designed to work well together, making it possible to render an entire application in pure C, despite using Scheme to define the bulk of (if not all of) the rendering tasks. Hypergiant removes the boiler-plate required to use these libraries together.
 - Intuitive control of input events, namely mouse and keyboard events (joystick support to come)
 - Creation of geometric primitives as well as animated sprites
+- [IQM](http://sauerbraten.org/iqm/) model loading and animation
 - A particle system
 - Simple shaders to make simple visualization easy
 
@@ -202,6 +206,7 @@ A parameter that may be set to a two argument function, which is called when the
 
 A parameter that may be set to a two argument function, which is called when the mouse wheel or track-pad is scrolled. The two arguments for the function represent the x and y distance (in pixels) that has been scrolled, respectively.
 
+
 ### Scenes
 Hypergiant reexports most of [Hyperscene](http://wiki.call-cc.org/eggref/4/hyperscene) except for `resize-cameras`, since it manages this functionality. `resize-cameras` is handled by `start`. `add-node`, `add-light`, `make-camera`, and `set-max-lights!` are modified as described below.
 
@@ -254,6 +259,7 @@ It’s worth noting that when `add-node` is called with a mesh, no references to
 
 `add-node`, along with `define-pipeline` does some magic so that things keep working when the program is evaluated (as opposed to compiled), but the end result is that it should Just Work.
 
+
 ### Render-pipelines
     [macro] (define-pipeline PIPELINE-NAME . SHADERS)
     [macro] (define-alpha-pipeline PIPELINE-NAME . SHADERS)
@@ -267,6 +273,7 @@ The functions in the Hyperscene pipelines created by `define-pipeline` correspon
     [macro] (export-pipeline . PIPELINES)
 
 Since `define-pipeline` defines multiple objects, this macro exports everything related to each pipeline in `PIPELINES`, except for the `set-SHADER-NAME-renderable-UNIFORM!` setters. These must be exported individually.
+
 
 ### Pre-defined pipelines and shaders
 For convenience, Hypergiant provides a number of pipelines and shaders to cover common operations. Don’t forget the each pipeline has a `NAME-render-pipeline` counterpart that should be used with `add-node`.
@@ -399,6 +406,45 @@ Here is an example of a simple pipeline using this shader:
 
 This function replaces `set-max-lights!`, from Hyperscene. It should be used in the same way. The only difference is that this function selects an appropriate `phong-lighting` shader based on the number of lights set. The `phong-lighting` shaders differ in the array size of the uniforms, and an appropriate `N` value should be used in the uniforms of any pipeline using `phong-lighting`: the size of each uniform array should be greater than or equal to `N` and a power of 2 from 8 to 64.
 
+
+    [constant] Shader: calc-bone-matrix
+
+**Uniforms**
+
+    ((bone-matrices (#:array #:mat4 100)))
+
+Note that this uniform is automatically provided when creating an animated model with `add-new-animated-model`.
+ 
+**Exports**
+
+    (calc-bone-matrix (BONE-INDICES #:vec4) (BONE-WEIGHTS #:vec3)) -> #:mat4
+
+This shader function calculates the matrix resulting from taking the given `BONE-INDICES` and `BONE-WEIGHTS` and summing the weighted matrices taken from the uniform `bone-matrices` array.
+
+Here’s a simple shader using this shader:
+
+```scheme
+(define-pipeline bone-pipeline
+  ((#:vertex input: ((position #:vec3) (tex-coord #:vec2)
+                     (blend-indexes #:vec4) (blend-weights #:vec4))
+             uniform: ((mvp #:mat4)
+                       (bone-matrices (#:array #:mat4 100)))
+             use: (calc-bone-matrix)
+             output: ((tex-c #:vec2)))
+   (define (main) #:void
+     (set! gl:position (* mvp
+                          (calc-bone-matrix blend-indexes
+                                            blend-weights)
+                          (vec4 position 1.0)))
+     (set! tex-c tex-coord)))
+  ((#:fragment input: ((tex-c #:vec2))
+               uniform: ((tex #:sampler-2d))
+	       output: ((frag-color #:vec4)))
+   (define (main) #:void
+     (set! frag-color (texture tex tex-c)))))
+```
+
+
 ### Geometry
 Hypergiant provides numerous functions for generating [gl-utils mesh](http://api.call-cc.org/doc/gl-utils#sec:gl-utils-mesh) primitives. The attributes of these meshes are all named with the same convention as the [pre-defined pipelines](#pre-defined-pipelines-and-shaders): The vertex position, normal, three element colour, and texture coordinate attributes are named `position`, `normal`, `color`, and `tex-coord`, respectively. Positions and normals are always `vec3`s, represented as floats in memory, while the type of the other attributes can be controlled with arguments.
 
@@ -438,6 +484,7 @@ For both types of spheres, when `NORMALS?` is `#t`, normals are added to the mes
     [procedure] (cylinder-mesh LENGTH RADIUS VERTICAL-SUBDIVISIONS RESOLUTION [normals? NORMALS?] [texture-width: TEXTURE-WIDTH] [texture-height: TEXTURE-HEIGHT] [texture-offset: TEXTURE-OFFSET] [texture: TEXTURE] [color: COLOR] [winding: WINDING] [mode: MODE] [texture-type: TEXTURE-TYPE] [color-type: COLOR-TYPE] [index-type: INDEX-TYPE])
 
 Create a cylindrical mesh of `LENGTH` and `RADIUS`, with the length oriented along the Y-axis, and the centre of the bottom of the cylinder at the origin. `VERTICAL-SUBDIVISIONS` sets the number of subdivisions along the length of the mesh, while `RESOLUTION` sets the number of subdivisions along the circumference. Setting both `TEXTURE-WIDTH` and `TEXTURE-HEIGHT` causes 2 element texture coordinates to be added to the mesh, with `TEXTURE-OFFSET` representing the upper left corner of the texture, defaulting to `(0 0)`. The texture’s upper left corner is mapped to the left side of the cylinder, wrapping counter-clockwise such that the left half of the texture corresponds to the front half of the cylinder. Alternately, `TEXTURE` may be supplied, which expects a function of one argument: the index of a vertex. This texture function should return a two element list of the texture coordinate at that index. The cube mesh vertices are ordered as a rectangular array with `RESOLUTION + 1` columns and `VERTICAL-SUBDIVISIONS + 1` rows. The first row corresponds to the top of the cylinder pole, while the last corresponds to the bottom. The first column has the same position as the last. This array is wrapped counter-clockwise around the sphere, starting on the left. Likewise, `COLOR` expects a similar function that accepts one index as an argument, but should return a three element list of colour values. When `NORMALS?` is `#t`, normals are added to the mesh. `WINDING` controls the direction of the vertex winding, either counter-clockwise (`#:ccw`, the default), or clockwise (`#:cw`). `MODE` should be a valid argument to `mode->gl`,  defaulting to `#:triangles`. `TEXTURE-TYPE`, `COLOUR-TYPE`, and `INDEX-TYPE` control the in-memory type of the texture attribute, the color attribute, and the index, and should be a valid argument to `type->gl`. `TEXTURE-TYPE`, `COLOUR-TYPE` and `INDEX-TYPE` all default to `#:ushort`.
+
 
 ### Animated sprites
 Hypergiant provides functions that handle the common needs for animated sprites. Such sprites use a sprite sheet – a texture that contains all of the frames of the animation, arranged in a grid. From this texture a `sprite-sheet` object is created, which is a mesh of rectangles and texture coordinates corresponding to the frames on the texture. Based on these sprite sheets, `animations` are created, which are essentially a list of frames, in the order that they should be played. A animation may be used with more than one sprite sheet (although, if the frames of each sprite sheet doesn’t correspond to each other, things will probably be weird).
@@ -489,6 +536,49 @@ Return the animation that the `ANIMATED-SPRITE` is currently playing.
     [procedure] (update-animated-sprite! ANIMATED-SPRITE DELTA)
 
 Update the `ANIMATED-SPRITE` given the time interval `DELTA`, changing the current frame of the sprite if enough time has elapsed since the last frame. This should be called every frame that the `ANIMATED-SPRITE` is to be animated.
+
+
+### Inter-Quake Models
+    [procedure] (load-iqm IQM-FILE [BASE-IQM])
+
+Load an IQM record from the given `IQM-FILE`. For IQM files that only provide an animation, a `BASE-IQM` is necessary in order to generate the Hypergiant animation object. When `load-iqm` is called with a `BASE-IQM`, any animations created are added to the `BASE-IQM`.
+
+    [record] (iqm meshes vertex-arrays n-vertexes n-triangles triangles adjacencies joints animations flags comment)
+
+The record created by `load-iqm`.
+
+    [parameter] iqm-global-flags
+An alist of flags that are recognized by `load-iqm`. Defaults to `()`.
+
+    [parameter] vertex-array-flags
+An alist of vertex-array flags that are recognized by `load-iqm`. Defaults to `()`.
+
+    [parameter] animation-flags
+An alist of animation flags that are recognized by `load-iqm`. Defaults to `((#:loop . 1))`.
+
+    [procedure] (iqm->mesh IQM ATTRIBUTES)
+
+Create a mesh from the given IQM object, with the provided list of ATTRIBUTES. This creates a mesh using all of the vertices of the IQM.
+
+    [procedure] (iqm->meshes IQM ATTRIBUTES)
+
+Create a list of mesh for each mesh defined in the given IQM object, with the provided list of ATTRIBUTES.
+
+    [parameter] normalized-attributes
+A list of attribute symbols which should be normalized creating a mesh from an IQM (with `iqm->mesh(s)`). Defaults to `(blend-weights color)`.
+
+
+### Animated models
+Animated models are an opaque object similar to animated sprites, but for rigged models. Animated models are used with the same animation getting and setting functions as [animated sprites](http://wiki.call-cc.org/eggref/4/hypergiant#animated-sprites), i.e. `current-animation` and `set-animation!`. Animations suitable for animated models are created when loading IQM files containing animations (which can be referenced with `iqm-animations`).
+
+    [procedure] (add-new-animated-model PARENT PIPELINE mesh: MESH base-animation: BASE-ANIMATION . ARGS)
+
+Extends `add-node`, returning an animated model object. This function requires the following keyword arguments: `MESH`, a mesh corresponding to the IQM (made with e.g. `iqm->mesh`), `BASE-ANIMATION` the initial animation to use for the animated model.
+
+    [procedure] (update-animated-model! ANIMATED-MODEL DELTA)
+
+Update the `ANIMATED-SPRITE` given the time interval `DELTA`, changing the current frame of the model if enough time has elapsed since the last frame, tweening between frames. This should be called every frame that the `ANIMATED-MODEL` is to be animated.
+
 
 ### Particle system
 Hypergiant’s particle system is implemented as an extension to Hyperscene. It introduces two concepts: *emitters* and *particles*. Emitters are a record that is created when added to a scene (via `add-emitter`), similar to a node. These records contain a reference to the node that is used to move them around the scene. Emitters also share properties with [meshes](http://wiki.call-cc.org/eggref/4/gl-utils#gl-utils-mesh). A component of the emitter is essentially a mesh where each vertex corresponds to a particle, and the same attribute system is shared with meshes.
@@ -560,6 +650,7 @@ Hypergiant reexports all of [gl-type](http://wiki.call-cc.org/eggref/4/gl-type) 
 
 Used to modify an existing string mesh, this is similar to calling [`string-mesh`](http://api.call-cc.org/doc/gl-type/string-mesh) with the `mesh:` argument, but additionally updates the `NODE`’s renderable to properly display the new `STRING`. `MESH` should be a mesh that was created with `string-mesh`. When the mesh’s VAO is created, it must have a non-static usage (i.e. setting `add-node`’s `usage:` keyword to `#:dynamic` or `#:stream`). `NODE` is a node associated with that mesh, which must have been created with a render-pipeline. `FACE` is a font face created with [`load-face`](http://api.call-cc.org/doc/gl-type/load-face). The number of graphical characters (non-whitespace characters in the char-set of `FACE`) in `STRING` must be equal to or less than the number of graphical characters in the string used to create `MESH`.
 
+
 ### Colors
 Some color functions are provided for convenience. These are nothing more than f32vectors, which are useful as uniform values.
 
@@ -584,6 +675,7 @@ Getters and setters for colors. `color-a` and `set-color-a!` can only be used wi
 
 Two pre-defined RGB colors, with unambiguous names.
 
+
 ### Math
 Hypergiant reexports all of [gl-math](http://wiki.call-cc.org/eggref/4/gl-math) with no modifications. The following math functions are additionally provided:
 
@@ -602,6 +694,7 @@ Returns the next power of two for the positive integer `n`.
     [procedure] (clamp X LOWER UPPER)
 
 Given the number `X`, return a value that is the same, so long as it is not greater than `UPPER` or less than `LOWER`: in these cases, return the upper or lower bound, respectively.
+
 
 #### Vector operations
 The following operate on the 3 element vectors ([`point`s](http://wiki.call-cc.org/eggref/4/gl-math#vector-operations)) defined in gl-math.
