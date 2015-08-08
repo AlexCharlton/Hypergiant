@@ -29,7 +29,7 @@ It is part of the [Chicken egg index](http://wiki.call-cc.org/chicken-projects/e
 * srfi-42
 * srfi-99
 
-While Hypergiant doesn’t require any external libraries directly, opengl-glew and glfw3 depend on OpenGL, [GLEW](http://glew.sourceforge.net/), [GLFW](http://www.glfw.org/) (the most recent major version is required: 3.X).
+While Hypergiant doesn’t require any external libraries directly, opengl-glew and glfw3 depend on OpenGL, [GLEW](http://glew.sourceforge.net/), [GLFW](http://www.glfw.org/) (the most recent major version is required: 3.X). gl-type depends on [Freetype](http://www.freetype.org/)
 
 When installing GLFW on OS X through Homebrew, an extra step is needed. Homebrew renames the library’s from the default. You can fix this by creating a link that points to the library that gets installed. E.g. `sudo ln -s <homebrew-lib-dir>/glfw3.dylib /usr/local/lib/glfw.dylib`
 
@@ -543,7 +543,7 @@ Update the `ANIMATED-SPRITE` given the time interval `DELTA`, changing the curre
 
     [procedure] (load-iqm IQM-FILE [BASE-IQM])
 
-Load an IQM record from the given `IQM-FILE`. For IQM files that only provide an animation, a `BASE-IQM` is necessary in order to generate the Hypergiant animation object. When `load-iqm` is called with a `BASE-IQM`, any animations created are added to the `BASE-IQM`.
+Load an IQM record from the given `IQM-FILE`. For IQM files that only provide an animation, a `BASE-IQM` is necessary in order to generate a Hypergiant animation object. When `load-iqm` is called with a `BASE-IQM`, any animations created are added to the `BASE-IQM`.
 
     [record] (iqm meshes vertex-arrays n-vertexes n-triangles triangles adjacencies joints animations flags comment)
 
@@ -567,7 +567,7 @@ Create a mesh from the given IQM object, with the provided list of ATTRIBUTES. T
 Create a list of mesh for each mesh defined in the given IQM object, with the provided list of ATTRIBUTES.
 
     [parameter] normalized-attributes
-A list of attribute symbols which should be normalized creating a mesh from an IQM (with `iqm->mesh(s)`). Defaults to `(blend-weights color)`.
+A list of attribute symbols which should be normalized when creating a mesh from an IQM (with `iqm->mesh(s)`). Defaults to `(blend-weights color)`.
 
 
 ### Animated models
@@ -579,7 +579,7 @@ Extends `add-node`, returning an animated model object. This function requires t
 
     [procedure] (update-animated-model! ANIMATED-MODEL DELTA)
 
-Update the `ANIMATED-SPRITE` given the time interval `DELTA`, changing the current frame of the model if enough time has elapsed since the last frame, tweening between frames. This should be called every frame that the `ANIMATED-MODEL` is to be animated.
+Update the `ANIMATED-MODEL` given the time interval `DELTA`, changing the current frame of the model if enough time has elapsed since the last frame, tweening between frames. This should be called every frame that the `ANIMATED-MODEL` is to be animated.
 
 
 ### Particle system
