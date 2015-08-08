@@ -3,8 +3,7 @@
 ;;;; IQM model loading and support for skeletal animations
 
 (module hypergiant-models
-(make-animated-model
- animated-model?
+(animated-model?
  add-new-animated-model
  animate-model-frames
  update-animated-model!)
@@ -39,16 +38,9 @@
                                                0 0.0
                                                current-frame n-joints)))
     (animate-model-frames base-animation current-frame n-joints 0 0 0)
-    animated-model))
-
-(define (make-animated-model node base-animation n-joints)
-  (let ((renderable (scene:node-data node)))
-    (set-finalizer! (%make-animated-model node #f
-                                          #f base-animation
-                                          0 0.0
-                                          (make-matrix-array n-joints)
-                                          n-joints)
-                    (lambda (m) (free (animated-model-current-frame m))))))
+    (set-finalizer! animated-model
+                    (lambda (m)
+                      (free (animated-model-current-frame m))))))
 
 (define m (allocate (* 16 4)))
 (define t1 (allocate (* 16 4)))

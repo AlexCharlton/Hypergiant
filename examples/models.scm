@@ -15,21 +15,18 @@
 ;;;; I think it looks pretty cool like this, though.
 
 (import chicken scheme)
-(use hypergiant lolevel)
+(use hypergiant)
 
 (define scene (make-parameter #f))
 (define camera (make-parameter #f))
-(define animated-model (make-parameter #f))
 (define pan (make-parameter 0))
 (define tilt (make-parameter 0))
 (define zoom (make-parameter 0))
 (define c-roll (make-parameter 0))
 
-;; (define iqm-frankie (load-iqm "Frankie.iqm"))
-;; (define frankie-run (load-iqm "Frankie_Run.iqm"))
 (define iqm-model (load-iqm "mrfixit.iqm"))
-
-(define model (iqm->mesh iqm-model '(position tex-coord blend-indexes blend-weights)))
+(define animated-model (make-parameter #f))
+(define model-mesh (iqm->mesh iqm-model '(position tex-coord blend-indexes blend-weights)))
 
 (define keys (make-bindings
               `((quit ,+key-escape+ press: ,stop)
@@ -71,12 +68,12 @@
                        near: 0.01))
   (camera-look-at! (camera) (make-point 0 0 0))
   (set-camera-zoom! (camera) 10)
-  (let* ((texture (load-ogl-texture "body.tga" 0 0 0)) ;; causing invalid enum error
+  (let* ((texture (load-ogl-texture "mrfixit.tga" 0 0 0)) ;; causing invalid enum error
          (animation (alist-ref 'idle (iqm-animations iqm-model)))
          (ani-model (add-new-animated-model (scene)
                                             bone-pipeline-render-pipeline
                                             model: iqm-model
-                                            mesh: model
+                                            mesh: model-mesh
                                             texture: texture
                                             base-animation: animation))
          (node (animated-sprite-node ani-model)))

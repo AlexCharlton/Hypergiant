@@ -442,26 +442,37 @@
               (base-iqm
                 (set! temp-base-frame (iqm-base-frame base-iqm))
                 (set! temp-inverse-base-frame
-                     (iqm-inverse-base-frame base-iqm))))
-             (set-finalizer!
-              (make-iqm (get-meshes meshes-offset n-meshes)
-                        (get-vertex-arrays vertex-arrays-offset n-vertex-arrays)
-                        n-vertexes n-triangles
-                        (get-triangles triangles-offset n-triangles)
-                        (get-triangles adjacency-offset n-triangles)
-                        joints
-                        base-frame inverse-base-frame
-                        (and temp-base-frame
-                             (build-animations animations poses frames bounds
-                                               temp-base-frame temp-inverse-base-frame
-                                               n-frames))
-                        (get-flags flags iqm-global-flags)
-                        (and comment-bitstring
-                             (bitstring->string comment-bitstring)))
-              (lambda (a)
-                (when iqm-base-frame
-                  (free (iqm-base-frame a))
-                  (free (iqm-inverse-base-frame a))))))))))
+                  (iqm-inverse-base-frame base-iqm))))
+             (let ((iqm (set-finalizer!
+                         (make-iqm (get-meshes meshes-offset n-meshes)
+                                   (get-vertex-arrays vertex-arrays-offset
+                                                      n-vertex-arrays)
+                                   n-vertexes n-triangles
+                                   (get-triangles triangles-offset
+                                                  n-triangles)
+                                   (get-triangles adjacency-offset
+                                                  n-triangles)
+                                   joints
+                                   base-frame inverse-base-frame
+                                   (and temp-base-frame
+                                        (build-animations animations poses
+                                                          frames bounds
+                                                          temp-base-frame
+                                                          temp-inverse-base-frame
+                                                          n-frames))
+                                   (get-flags flags iqm-global-flags)
+                                   (and comment-bitstring
+                                        (bitstring->string
+                                         comment-bitstring)))
+                         (lambda (a)
+                           (when iqm-base-frame
+                             (free (iqm-base-frame a))
+                             (free (iqm-inverse-base-frame a)))))))
+               (when base-iqm
+                 (iqm-animations-set! base-iqm
+                                      (append (iqm-animations iqm)
+                                              (iqm-animations base-iqm))))
+               iqm))))))
     (else (error 'load-iqm "Poorly formed IQM file:" file))))
 
 ;;; IQM -> mesh
@@ -547,12 +558,6 @@
                           (alist-ref 'first-vertex iqm-mesh))
              mesh))
          (iqm-meshes iqm))))
-
-;;; IQM -> animated model
-(define (make-iqm-animated-model node iqm base-animation-name)
-  (make-animated-model node (alist-ref base-animation-name
-                                       (iqm-animations iqm))
-                       (length (iqm-joints iqm))))
 
 ;;; Utils
 (define (bit->byte x) (arithmetic-shift x -3))
