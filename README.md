@@ -539,6 +539,8 @@ Update the `ANIMATED-SPRITE` given the time interval `DELTA`, changing the curre
 
 
 ### Inter-Quake Models
+[Inter-Quake Models](http://sauerbraten.org/iqm/) are an open standard for rigged models, with support across a range of tools. Hypergiant supports their loading, and creating meshes and animated models with the resulting IQM objects.
+
     [procedure] (load-iqm IQM-FILE [BASE-IQM])
 
 Load an IQM record from the given `IQM-FILE`. For IQM files that only provide an animation, a `BASE-IQM` is necessary in order to generate the Hypergiant animation object. When `load-iqm` is called with a `BASE-IQM`, any animations created are added to the `BASE-IQM`.
