@@ -75,7 +75,7 @@
         (set-animation! (player) (alist-ref 'run animations)))))
 
 (define (add-frame-rate)
-  (frame-rate-mesh (string-mesh "...." (frame-rate-font)))
+  (frame-rate-mesh (make-string-mesh 4))
   (frame-rate-node
    (add-node ui text-pipeline-render-pipeline
              mesh: (frame-rate-mesh)
