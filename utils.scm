@@ -4,6 +4,7 @@
 ;;;; Imported by hypergiant.scm
 
 (export update-string-mesh!
+        make-string-mesh
         make-rgb-color
         make-rgba-color
         color-r color-g color-b color-a
@@ -17,6 +18,14 @@
   (string-mesh string face mesh: mesh)
   (glls:set-renderable-n-elements! (scene:node-data node)
                                    (mesh-n-indices mesh)))
+
+(define (make-string-mesh n-chars)
+  (make-mesh vertices: `(attributes: ((position #:short 2)
+                                      (tex-coord #:unsigned-short 2
+                                                 normalized: #t))
+                         n-vertices: ,(* n-chars 4))
+             indices: `(type: #:ushort
+                        n-indices: ,(* n-chars 6))))
 
 ;;; Colors
 (define (make-rgb-color r g b #!optional non-gc?)
