@@ -15,9 +15,13 @@
 (use srfi-4 miscmacros)
 
 (define (update-string-mesh! mesh node string face)
-  (string-mesh string face mesh: mesh)
-  (glls:set-renderable-n-elements! (scene:node-data node)
-                                   (mesh-n-indices mesh)))
+  (if (and node (zero? (string-length string)))
+      (glls:set-renderable-n-elements! (scene:node-data node) 0)
+      (begin
+        (string-mesh string face mesh: mesh)
+        (when node
+          (glls:set-renderable-n-elements! (scene:node-data node)
+                                           (mesh-n-indices mesh))))))
 
 (define (make-string-mesh n-chars)
   (make-mesh vertices: `(attributes: ((position #:short 2)
