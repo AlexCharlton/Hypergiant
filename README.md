@@ -652,6 +652,10 @@ Hypergiant reexports all of [gl-type](http://wiki.call-cc.org/eggref/4/gl-type) 
 
 Used to modify an existing string mesh, this is similar to calling [`string-mesh`](http://api.call-cc.org/doc/gl-type/string-mesh) with the `mesh:` argument, but additionally updates the `NODE`’s renderable to properly display the new `STRING`. `MESH` should be a mesh that was created with `string-mesh`. When the mesh’s VAO is created, it must have a non-static usage (i.e. setting `add-node`’s `usage:` keyword to `#:dynamic` or `#:stream`). `NODE` is a node associated with that mesh, which must have been created with a render-pipeline. `FACE` is a font face created with [`load-face`](http://api.call-cc.org/doc/gl-type/load-face). The number of graphical characters (non-whitespace characters in the char-set of `FACE`) in `STRING` must be equal to or less than the number of graphical characters in the string used to create `MESH`.
 
+    [procedure] (make-string-mesh N-CHARS)
+
+Creates a mesh similar to those created by [`string-mesh`](http://api.call-cc.org/doc/gl-type/string-mesh) with space reserved for N-CHARS. Intended to be used with `update-string-mesh!`.
+
 
 ### Colors
 Some color functions are provided for convenience. These are nothing more than f32vectors, which are useful as uniform values.
