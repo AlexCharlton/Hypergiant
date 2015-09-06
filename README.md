@@ -669,12 +669,19 @@ Create a three or four element f32vector with values `(R G B [A])`. If `NON-GC?`
     [procedure] (color-g COLOR)
     [procedure] (color-b COLOR)
     [procedure] (color-a COLOR)
-    [procedure] (set-color-r! COLOR)
-    [procedure] (set-color-g! COLOR)
-    [procedure] (set-color-b! COLOR)
-    [procedure] (set-color-a! COLOR)
+    [procedure] (set-color-r! COLOR R)
+    [procedure] (set-color-g! COLOR G)
+    [procedure] (set-color-b! COLOR B)
+    [procedure] (set-color-a! COLOR A)
+    [procedure] (rgb-color-set! COLOR R G B)
+    [procedure] (rgba-color-set! COLOR R G B A)
 
 Getters and setters for colors. `color-a` and `set-color-a!` can only be used with 4 element (alpha) colors.
+
+    [procedure] (rgb-color-set-color! COLOR COLOR2)
+    [procedure] (rgba-color-set-color! COLOR COLOR2)
+
+Set the given `COLOR` to the values of `COLOR2`.
 
     [constant] black
     [constant] white
