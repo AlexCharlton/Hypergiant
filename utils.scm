@@ -26,7 +26,7 @@
                                            (mesh-n-indices mesh))))))
 
 (define (make-string-mesh n-chars)
-  (make-mesh vertices: `(attributes: ((position #:short 2)
+  (make-mesh vertices: `(attributes: ((position #:float 2)
                                       (tex-coord #:unsigned-short 2
                                                  normalized: #t))
                          n-vertices: ,(* n-chars 4))
