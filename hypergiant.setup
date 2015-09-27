@@ -91,4 +91,4 @@
     "hypergiant-particles.so" "hypergiant-particles.import.so"
     "hypergiant-geometry.so" "hypergiant-geometry.import.so"
     "hypergiant-models.so" "hypergiant-models.import.so")
- '((version "0.4.2")))
+ '((version "0.4.3")))
