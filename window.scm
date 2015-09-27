@@ -10,6 +10,7 @@
  get-window-position
  set-window-position
  ui
+ *pixel-density-ratio*
  resize-hooks
  frame-rate
  get-clipboard-string
@@ -19,7 +20,7 @@
 (import chicken scheme foreign)
 (use (prefix glfw3 %) (prefix glfw3-bindings %%)
      (prefix opengl-glew gl:) (prefix glls glls:)
-     gl-math gl-utils (prefix hyperscene scene:)
+     gl-math gl-utils (prefix hyperscene scene:) gl-type
      srfi-1 srfi-4 srfi-18 srfi-99 miscmacros)
 
 (include "input")
@@ -27,6 +28,7 @@
 (define *last-render-time* 0)
 (define ui #f)
 (define *ui-camera* #f)
+(define *pixel-density-ratio* #f)
 
 (define (render pre-render post-render)
   (gl:clear (bitwise-ior gl:+color-buffer-bit+ gl:+depth-buffer-bit+))
@@ -48,6 +50,12 @@
     (gl:viewport 0 0 w h))
   (for-each (cut <> w h) (resize-hooks))
   (scene:resize-cameras w h))
+
+(define (set-pixel-density-ratio)
+  (receive (window-w _) (get-window-size)
+    (receive (framebuffer-w _) (get-framebuffer-size)
+      (set! *pixel-density-ratio*
+        (/ framebuffer-w window-w)))))
 
 (define (start* width height title . args)
   (%init)
@@ -81,6 +89,8 @@
   (set! *ui-camera* (scene:make-camera #:ortho #:position ui))
   (scene:deactivate-camera *ui-camera*)
   (resize #f width height)
+  (set-pixel-density-ratio)
+  (pixel-density-ratio (ceiling *pixel-density-ratio*))
   (gl:get-error) ;; silence error caused by GLEW
   (glls:compile-pipelines)
   ((get-keyword init: args (lambda () (lambda () #f))))
