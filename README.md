@@ -31,7 +31,7 @@ It is part of the [Chicken egg index](http://wiki.call-cc.org/chicken-projects/e
 
 While Hypergiant doesn’t require any external libraries directly, opengl-glew and glfw3 depend on OpenGL, [GLEW](http://glew.sourceforge.net/), [GLFW](http://www.glfw.org/) (the most recent major version is required: 3.X). gl-type depends on [Freetype](http://www.freetype.org/)
 
-When installing GLFW on OS X through Homebrew, an extra step is needed. Homebrew renames the library’s from the default. You can fix this by creating a link that points to the library that gets installed. E.g. `sudo ln -s <homebrew-lib-dir>/glfw3.dylib /usr/local/lib/glfw.dylib`
+When installing GLFW on OS X through Homebrew, an extra step is needed. Homebrew renames the library’s from the default. You can fix this by creating a link that points to the library that gets installed. E.g. `sudo ln -s <homebrew-lib-dir>/glfw3.dylib /usr/local/lib/libglfw.dylib`
 
 
 ## Documentation
