@@ -15,18 +15,14 @@
         vfloor
         next-power-of-two)
 
-(use (prefix random-mtzig random-mtzig:))
+(cond-expand
+  (windows)
+  (else (use random-bsd)))
 
-(define random-state (random-mtzig:init))
+(define (random-normal mean sd)
+  (+ mean (* sd (/ (random 1000000) 1000000))))
 
-(define (random-normal #!optional (mean 0 ) (variance 1))
-  (+ mean
-     (* (random-mtzig:randn! random-state)
-        variance)))
-
-(define (random-float)
-  (- (* 2 (f32vector-ref (random-mtzig:f32vector-randu! 1 random-state) 0))
-     1))
+(define random-float random-real)
 
 (define (clamp x l u)
   (min (max x l) u))

@@ -24,7 +24,7 @@ It is part of the [Chicken egg index](http://wiki.call-cc.org/chicken-projects/e
 * Hyperscene
 * noise
 * soil
-* random-mtzig
+* random-bsd
 * miscmacros
 * srfi-42
 * srfi-99
