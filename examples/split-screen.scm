@@ -16,8 +16,7 @@
 (define c-roll (make-parameter 0))
 (define cube (cube-mesh 1 color: (lambda (_) '(0.5 0.3 0.5))))
 (define small-cube (cube-mesh 1 color: (lambda (_) '(0.2 0.1 0.2))))
-(mesh-transform! 'position small-cube
-                 (scaling 0.4))
+(mesh-transform! small-cube (scaling 0.4))
 
 (define keys (make-bindings
               `((quit ,+key-escape+ press: ,stop)

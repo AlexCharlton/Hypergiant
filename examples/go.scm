@@ -326,7 +326,7 @@
                output: ((frag-color #:vec4)))
    (define (main) #:void
      (set! frag-color
-       (light (vec4 color 1) p n)))))
+       (light (vec4 color 1) p (normalize (* (mat3 inverse-transpose-model) n)))))))
 
 (define-pipeline wood-pipeline
   ((#:vertex input: ((position #:vec3) (normal #:vec3))
@@ -354,12 +354,12 @@
                                  resolution))))
        (vec4 (+ color (* n 0.1)) 1)))
    (define (main) #:void
-     (set! frag-color (light (* (grain 32) (grain 4)) p n)))))
+     (set! frag-color (light (* (grain 32) (grain 4)) p
+                             (normalize (* (mat3 inverse-transpose-model) n)))))))
 
 ;; Meshes and nodes
 (define board-mesh (cube-mesh 1 normals?: #t))
-(mesh-transform! 'position board-mesh
-                 (3d-scaling 1.2 1.2 0.06))
+(mesh-transform! board-mesh (3d-scaling 1.2 1.2 0.06))
 
 (define line-width (/ 256))
 (define grid-line (rectangle-mesh (+ 1 line-width) line-width
@@ -411,7 +411,6 @@
          marker-points)))
 
 (define board-grid-mesh (mesh-transform-append
-                         'position
                          (append (build-grid)
                                  (build-markers))))
 
@@ -432,7 +431,7 @@
 (define stone-radius (/ 40))
 (define stone-half-height 0.4)
 (define stone-mesh (sphere-mesh stone-radius 16 normals?: #t))
-(mesh-transform! 'position stone-mesh
+(mesh-transform! stone-mesh
                  (3d-scaling 1 1 stone-half-height))
 (define colors `((white . ,white)
                  (black . ,black)))

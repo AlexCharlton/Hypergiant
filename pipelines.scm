@@ -76,7 +76,7 @@
   ((#:geometry input: ((vnormal (#:array vec3)))
                uniform: ((mvp #:mat4))
                output: ((color #:vec3))
-               prelude: "layout(triangles) in;\n\
+               prelude: "layout(points) in;\n\
 layout(line_strip, max_vertices = 2) out;\n")
    (define (main) #:void
      (let ((n #:vec3 (array-ref vnormal 0))
