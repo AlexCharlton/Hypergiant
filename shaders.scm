@@ -5,7 +5,8 @@
 (module hypergiant-shaders
 (phong-lighting
  calc-bone-matrix
- set-max-lights!)
+ set-max-lights!
+ color-conversion)
 
 (import chicken scheme)
 (use hypergiant-render-pipeline
@@ -34,6 +35,71 @@
 (cond-expand
   (gles (include "es-pipelines"))
   (else (include "pipelines")))
+
+;; Via: http://www.chilliant.com/rgb2hsv.html
+(glls:define-shader color-conversion
+  (#:fragment export: (hue->rgb
+                       hsv->rgb
+                       hsl->rgb
+                       rgb->hsl
+                       rgb->hsv))
+
+  (define epsilon #:float 0.0000000001)
+
+  (define (hue->rgb (h #:float)) #:vec3
+    (let ((r #:float (- (abs (- (* h 6) 3)) 1))
+          (g #:float (- 2 (abs (- (* h 6) 2))))
+          (b #:float (- 2 (abs (- (* h 6) 4)))))
+      (clamp (vec3 r g b) 0 1)))
+
+  (define (hsv->rgb (hsv #:vec3)) #:vec3
+    (* (+ (* (- (hue->rgb hsv.x)
+                1)
+             hsv.y)
+          1)
+       hsv.z))
+
+  (define (hsl->rgb (hsl #:vec3)) #:vec3
+    (let ((c #:float (* (- 1
+                           (abs (- (* 2 hsl.z)
+                                   1)))
+                        hsl.y)))
+      (+ (* (- (hue->rgb hsl.x)
+               0.5)
+            c)
+         hsl.z)))
+
+  (define (rgb->hcv (rgb #:vec3)) #:vec3
+    (let* ((p #:vec4 (if (< rgb.g rgb.b)
+                         (vec4 rgb.bg -1.0 2.0/3.0)
+                         (vec4 rgb.gb 0.0 -1.0/3.0)))
+           (q #:vec4 (if (< rgb.r p.x)
+                         (vec4 p.xyw rgb.r)
+                         (vec4 rgb.r p.yzx)))
+           (c #:float (- q.x (min q.w q.y)))
+           (h #:float (abs (+ (/ (- q.w q.y)
+                                 (+ (* 6 c)
+                                    epsilon))
+                              q.z))))
+      (vec3 h c q.x)))
+
+  (define (rgb->hsv (rgb #:vec3)) #:vec3
+    (let ((hcv #:vec3 (rgb->hcv rgb)))
+      (vec3 hcv.x
+            (/ hcv.y
+               (+ hcv.z epsilon))
+            hcv.z)))
+
+  (define (rgb->hsl (rgb #:vec3)) #:vec3
+    (let* ((hcv #:vec3 (rgb->hcv rgb))
+           (l #:float (- hcv.z
+                         (* hcv.y 0.5)))
+           (s #:float (/ hcv.y
+                         (+ (+ 1 (- (abs (- (* l 2)
+                                            1)))
+                               epsilon)))))
+      (vec3 hcv.x s l)))
+  )
 
 ;; TODO light direction
 (define-syntax phong-light-n
