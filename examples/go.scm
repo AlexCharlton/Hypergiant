@@ -411,8 +411,9 @@
          marker-points)))
 
 (define board-grid-mesh (mesh-transform-append
-                         (append (build-grid)
-                                 (build-markers))))
+                         (map (lambda (pair) (list (car pair) (cdr pair)))
+                              (append (build-grid)
+                                      (build-markers)))))
 
 (define brown (make-rgb-color 0.5 0.4 0.2 #t))
 (define shiny-material (make-material 0.5 0.5 0.5 10))
