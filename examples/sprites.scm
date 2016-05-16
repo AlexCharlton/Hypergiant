@@ -7,8 +7,12 @@
 
 ;; If these font paths are not on your system, substitute with a font that is.
 (define font (cond-expand
-	      (macosx "/Library/Fonts/Microsoft/Arial.ttf")
-	      (else "/usr/share/fonts/truetype/msttcorefonts/arial.ttf")))
+               (macosx "/Library/Fonts/Microsoft/Arial.ttf")
+               (windows (begin 
+                          (use posix)
+                          (string-append (get-environment-variable "SYSTEMROOT")
+                                         "/Fonts/Arial.ttf")))
+               (else "/usr/share/fonts/truetype/msttcorefonts/arial.ttf")))
 
 (import chicken scheme)
 (use hypergiant data-structures)

@@ -5,8 +5,12 @@
 
 ;; If these font paths are not on your system, substitute with a font that is.
 (define font (cond-expand
-	      (macosx "/Library/Fonts/Microsoft/Arial.ttf")
-	      (else "/usr/share/fonts/truetype/msttcorefonts/arial.ttf")))
+               (macosx "/Library/Fonts/Microsoft/Arial.ttf")
+               (windows (begin 
+                          (use posix)
+                          (string-append (get-environment-variable "SYSTEMROOT")
+                                         "/Fonts/Arial.ttf")))
+               (else "/usr/share/fonts/truetype/msttcorefonts/arial.ttf")))
 
 ;;;; NOTE:
 ;;;; If this file is compiled, since it uses glls-render, it must also be linked with OpenGL
@@ -411,8 +415,9 @@
          marker-points)))
 
 (define board-grid-mesh (mesh-transform-append
-                         (append (build-grid)
-                                 (build-markers))))
+                         (map (lambda (pair) (list (car pair) (cdr pair)))
+                              (append (build-grid)
+                                      (build-markers)))))
 
 (define brown (make-rgb-color 0.5 0.4 0.2 #t))
 (define shiny-material (make-material 0.5 0.5 0.5 10))

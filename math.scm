@@ -22,7 +22,7 @@
         smoother-step)
 
 (cond-expand
-  (windows)
+;;(windows)
   (else (use random-bsd)))
 
 (define (random-normal mean sd)
