@@ -3,6 +3,8 @@
 ;;;; Math utilities
 ;;;; Imported by hypergiant.scm
 
+(use data-structures)
+
 (export random-normal
         random-float
         clamp
@@ -13,7 +15,11 @@
         vceiling
         vtruncate
         vfloor
-        next-power-of-two)
+        next-power-of-two
+        ease
+        linenear
+        smooth-step
+        smoother-step)
 
 (cond-expand
   (windows)
@@ -70,3 +76,23 @@
 (define (next-power-of-two n)
   (inexact->exact (expt 2 (ceiling (/ (log n)
                                       (log 2))))))
+
+;;;; Easing functions
+;; TODO more: https://github.com/EmmanuelOga/easing/blob/master/lib/easing.lua
+;;            http://sol.gfxile.net/interpolation/
+(define (ease fun a b time start end)
+  (+ a (* (- b a)
+          (fun (/ (- time start)
+                  (- end start))))))
+
+(define linenear identity)
+
+(define (smooth-step x)
+  (* x x
+     (- 3 (* 2 x))))
+
+(define (smoother-step x)
+  (* x x x
+     (+ (* x (- (* x 6)
+                15))
+        10)))
