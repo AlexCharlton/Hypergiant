@@ -3,7 +3,7 @@
 ;;;; Math utilities
 ;;;; Imported by hypergiant.scm
 
-(use data-structures)
+(use data-structures random-bsd)
 
 (export random-normal
         random-float
@@ -20,10 +20,6 @@
         linenear
         smooth-step
         smoother-step)
-
-(cond-expand
-;;(windows)
-  (else (use random-bsd)))
 
 (define (random-normal mean sd)
   (+ mean (* sd (/ (random 1000000) 1000000))))
