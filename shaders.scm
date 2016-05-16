@@ -71,8 +71,8 @@
 
   (define (rgb->hcv (rgb #:vec3)) #:vec3
     (let* ((p #:vec4 (if (< rgb.g rgb.b)
-                         (vec4 rgb.bg -1.0 2.0/3.0)
-                         (vec4 rgb.gb 0.0 -1.0/3.0)))
+                         (vec4 rgb.bg -1.0 (/ 2.0 3.0))
+                         (vec4 rgb.gb 0.0 (/ -1.0 3.0))))
            (q #:vec4 (if (< rgb.r p.x)
                          (vec4 p.xyw rgb.r)
                          (vec4 rgb.r p.yzx)))
