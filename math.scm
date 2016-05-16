@@ -16,7 +16,7 @@
         next-power-of-two)
 
 (cond-expand
-  (windows)
+;;(windows)
   (else (use random-bsd)))
 
 (define (random-normal mean sd)
