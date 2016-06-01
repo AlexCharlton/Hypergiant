@@ -566,7 +566,8 @@
 (define (file->u8vector file)
   (with-input-from-file file
     (lambda ()
-      (read-u8vector #f))))
+      (read-u8vector #f))
+    #:binary))
 
 (define (type->make-vector type)
   (ecase type

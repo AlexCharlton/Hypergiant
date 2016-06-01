@@ -31,7 +31,8 @@
 (define (file->u8vector file)
   (with-input-from-file file
     (lambda ()
-      (read-u8vector #f))))
+      (read-u8vector #f))
+    #:binary))
 
 (define m4 (allocate 16))
 (define (m4x4-3x4-eq? m4x4 m3x4)
