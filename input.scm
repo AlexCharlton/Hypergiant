@@ -21,7 +21,10 @@
         scroll-callback
         get-cursor-position
         set-cursor-position
-        get-cursor-world-position)
+        get-cursor-world-position
+        hide-cursor
+        show-cursor
+        disable-cursor)
 
 (define-record-type binding
   %make-binding
@@ -197,3 +200,12 @@
       (m*vector! ivp near)
       (m*vector! ivp far)
       (values near far))))
+
+(define (hide-cursor)
+  (%set-input-mode (%window) %+cursor+ %+cursor-hidden+))
+
+(define (show-cursor)
+  (%set-input-mode (%window) %+cursor+ %+cursor-normal+))
+
+(define (disable-cursor)
+  (%set-input-mode (%window) %+cursor+ %+cursor-disabled+))
