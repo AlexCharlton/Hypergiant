@@ -197,3 +197,12 @@
       (m*vector! ivp near)
       (m*vector! ivp far)
       (values near far))))
+
+(define (hide-cursor)
+  (%set-input-mode (%window) %+cursor+ %+cursor-hidden+))
+
+(define (show-cursor)
+  (%set-input-mode (%window) %+cursor+ %+cursor-normal+))
+
+(define (disable-cursor)
+  (%set-input-mode (%window) %+cursor+ %+cursor-disabled+))
