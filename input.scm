@@ -21,7 +21,10 @@
         scroll-callback
         get-cursor-position
         set-cursor-position
-        get-cursor-world-position)
+        get-cursor-world-position
+        hide-cursor
+        show-cursor
+        disable-cursor)
 
 (define-record-type binding
   %make-binding
